@@ -4,6 +4,7 @@
 // speed and radio station. Also draws the full city map for the pause menu.
 import { WEAPONS, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
 import { nextMissionMarker } from './missions.js';
+import { raceMarkers, raceStatus } from './races.js';
 
 const MAP_X0 = -180;
 const MAP_Z0 = -60;
@@ -74,6 +75,9 @@ export function createHud(root, city) {
 
   const objective = el('div', 'hud-objective', hud);
   const timer = el('div', 'hud-timer', hud);
+  const racePanel = el('div', 'hud-race', hud);
+  const racePos = el('div', 'pos', racePanel);
+  const raceInfo = el('div', 'info', racePanel);
   const subtitle = el('div', 'hud-subtitle', hud);
   const banner = el('div', 'hud-banner', hud);
   const bannerTitle = el('div', 'title', banner);
@@ -143,7 +147,7 @@ export function createHud(root, city) {
       bannerTitle.textContent = title;
       bannerSub.textContent = sub;
       banner.className = `hud-banner show ${kind}`;
-      state.bannerTime = kind === 'mission' ? 3 : 4.5;
+      state.bannerTime = kind === 'countdown' ? 0.9 : kind === 'mission' ? 3 : 4.5;
     },
     /** Drops any banner and help toast at once (a scene change, a staged shot). */
     clearMessages() {
@@ -185,6 +189,13 @@ export function createHud(root, city) {
         timer.textContent = `${Math.floor(m.timer / 60)}:${String(Math.floor(m.timer % 60)).padStart(2, '0')}`;
         timer.classList.add('show');
       } else timer.classList.remove('show');
+
+      const rs = raceStatus(game);
+      racePanel.classList.toggle('show', Boolean(rs));
+      if (rs) {
+        racePos.innerHTML = `${rs.position}<small>/${rs.of}</small>`;
+        raceInfo.innerHTML = `POSITION<br>CHECKPOINT ${rs.cp}/${rs.cps}<br>${rs.time}`;
+      }
 
       if (state.lines.length) {
         state.lineTime -= dt;
@@ -284,6 +295,13 @@ export function mapBlips(game) {
   if (next) out.push({ x: next.x, z: next.z, color: '#ffd23f', shape: 'diamond', label: 'M', edge: true });
   if (m && m.target) out.push({ x: m.target.x, z: m.target.z, color: `#${m.target.color.toString(16).padStart(6, '0')}`, shape: 'diamond', edge: true });
   if (m && m.extraBlips) for (const b of m.extraBlips) out.push({ x: b.x, z: b.z, color: `#${b.color.toString(16).padStart(6, '0')}`, shape: 'circle', size: b.small ? 4 : 6, edge: !b.small });
+  for (const r of raceMarkers(game)) out.push({ x: r.x, z: r.z, color: '#ff8c1a', shape: 'square', label: 'R', size: 6 });
+  const rs = raceStatus(game);
+  if (rs) {
+    out.push({ x: rs.next[0], z: rs.next[1], color: '#ff8c1a', shape: 'diamond', edge: true });
+    if (rs.after) out.push({ x: rs.after[0], z: rs.after[1], color: '#ffc47a', shape: 'circle', size: 4 });
+    for (const r of game.race.racers) if (!r.player && !r.done) out.push({ x: r.car.x, z: r.car.z, color: '#ffffff', shape: 'circle', size: 4 });
+  }
   const s = game.city.pois.safehouse;
   out.push({ x: s.x, z: s.z, color: '#4dff88', shape: 'square', label: 'S', size: 5 });
   const paint = game.city.pois.paint;

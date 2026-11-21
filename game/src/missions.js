@@ -414,7 +414,7 @@ export function updateStory(game, dt) {
     return;
   }
   const def = STORY[story.index];
-  if (!def) return;
+  if (!def || game.race) return;
   const at = game.city.pois[def.start];
   if (def.auto) {
     startMission(game, story.index);

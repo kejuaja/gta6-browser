@@ -16,6 +16,7 @@ import { updateTraffic, populateTraffic, scareTraffic, parkCar } from './traffic
 import { createWanted, reportCrime, updatePolice, clearWanted } from './police.js';
 import { createHelicopter, updateHelicopter, syncHelicopter, resetHelicopter } from './helicopter.js';
 import { updateRoadblocks, clearRoadblocks } from './roadblocks.js';
+import { createRaces, updateRaces, clearRaces } from './races.js';
 import { updateHostiles, hostileHurt } from './hostiles.js';
 import { createStory, updateStory, failMission } from './missions.js';
 import { createPickups, updatePickups, dropCash } from './pickups.js';
@@ -126,6 +127,7 @@ function wireHooks(game) {
 
 /** Clears every person, car, pickup and mission marker, keeping the city. */
 export function clearWorld(game) {
+  clearRaces(game);
   if (game.story.active) failMission(game, '');
   removeBeacon(game.fx, game.story.beacon);
   game.story.beacon = null;
@@ -178,6 +180,7 @@ export function startGame(game, save = null) {
   if (save) p.health = save.health;
   createPickups(game);
   createShop(game);
+  createRaces(game);
   // Rides waiting at the kerb by the hospital and the safehouse.
   parkCar(game, 'sorrel', 226.2, 108, Math.PI, 0x2c5e8a);
   parkCar(game, 'kestrel', 226.2, 128, Math.PI, 0xff3b30);
@@ -288,6 +291,7 @@ export function stepGame(game, dt, input) {
     animateCharacter(p, dt);
   }
   if (playing) {
+    guarded(game, updateRaces, dt);
     guarded(game, updateStory, dt);
     guarded(game, updatePickups, dt);
     guarded(game, updateShop, dt);

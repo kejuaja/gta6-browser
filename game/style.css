@@ -135,3 +135,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .credits .line:first-child { font: 900 64px var(--display); font-style: italic; color: var(--sun); }
 .credits .line:nth-child(2) { font: 400 40px "Brush Script MT", cursive; color: var(--teal); }
 @keyframes rise { from { opacity: 0; transform: translateY(40px); } }
+.hud-race { position: absolute; top: 218px; right: 24px; display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: rgba(13, 11, 20, 0.62); border-right: 5px solid #ff8c1a; border-radius: 8px; opacity: 0; transition: opacity 0.3s; }
+.hud-race.show { opacity: 1; }
+.hud-race .pos { font: 900 52px var(--display); color: #ff8c1a; text-shadow: 2px 2px 0 #2a1300; line-height: 1; }
+.hud-race .pos small { font-size: 22px; color: #fff; }
+.hud-race .info { font: 700 14px var(--text); line-height: 1.35; text-align: left; }
+.hud-banner.countdown .title { font-size: 120px; color: #ff8c1a; }

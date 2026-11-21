@@ -276,7 +276,7 @@ export function syncHelicopter(game, dt) {
   m.blue.visible = !phase;
   const beam = !heli.down;
   heli.cone.visible = heli.pool.visible = beam;
-  heli.light.intensity = beam ? 350 : 0;
+  heli.light.intensity = beam ? 140 : 0;
   if (!beam) return;
   const fx = Math.sin(heli.yaw);
   const fz = Math.cos(heli.yaw);

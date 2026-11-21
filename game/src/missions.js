@@ -182,7 +182,7 @@ export const STORY = [
       { type: 'spawnCar', id: 'truck', model: 'duna', color: 0x1c1c1e, x: 523, z: 175, yaw: Math.PI },
       { type: 'enter', car: 'truck', text: "Steal Voss's black Duna in Coral Heights." },
       { type: 'wanted', level: 4, say: [[NICO, 'Roadblocks and a helicopter. Voss is paying overtime tonight.']] },
-      { type: 'survive', car: 'truck', seconds: 60, floor: 4, text: 'Survive the heat: keep the cash truck alive. Ram the roadblocks, outrun Air 1.' },
+      { type: 'survive', car: 'truck', seconds: 60, floor: 4, text: 'Survive the heat: keep the cash truck in one piece.' },
       { type: 'deliver', car: 'truck', carName: 'the Duna', poi: 'safehouse', radius: 10, text: 'Bring the truck to the safehouse in Coral Heights.', lose: 'Lose the cops before you go to the safehouse. Paint Shack in the Docks helps ($100).', say: [[VAL, 'Air 1 is low on fuel and pulling back. Now lose the rest of them!']] },
     ],
     outro: [

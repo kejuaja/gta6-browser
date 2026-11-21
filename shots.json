@@ -1,6 +1,6 @@
 [
-  { "name": "1-chase.jpg", "query": "?shot=chase&seed=1", "shows": "Three-star police chase on the beach road: HUD, minimap, mission objective, the pier's wheel" },
-  { "name": "2-shootout.jpg", "query": "?shot=shootout&seed=1", "shows": "On-foot SMG gunfight with Voss enforcers on the Saltmarsh quay" },
-  { "name": "3-pursuit.jpg", "query": "?shot=pursuit&seed=1", "shows": "Mission 'Hot Pursuit': chasing the courier through Neon Strip and Downtown" },
-  { "name": "4-title.jpg", "query": "?shot=title&seed=1", "shows": "Title screen over a live view of the city, beach and pier" }
+  { "name": "1-heat.jpg", "query": "?shot=heat&seed=1", "shows": "Mission 'Sunset Heat' at four stars: Voss's cash truck heading into a police roadblock under Air 1's searchlight, survival timer, rank, HUD and minimap" },
+  { "name": "2-race.jpg", "query": "?shot=race&seed=1", "shows": "The Sunset Boulevard Run street race: four cars on the beach road, the next checkpoint, race position and time, an upgraded Kestrel" },
+  { "name": "3-garage.jpg", "query": "?shot=garage&seed=1", "shows": "Dex's Garage: engine, armour and tyre upgrades bought with cash and fitted on the car (scoop, wing, side plates, gold rims), respect earned" },
+  { "name": "4-citychase.jpg", "query": "?shot=citychase&seed=1", "shows": "Mission 'Hot Pursuit' at three stars: cruisers on the bumper and the police helicopter's beam through the Neon Strip" }
 ]

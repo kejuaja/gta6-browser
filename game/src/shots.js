@@ -1,4 +1,5 @@
-// The screenshot scenes behind ?shot=chase|shootout|beach|title. Each one starts a real game,
+// The screenshot scenes behind ?shot=heat|race|garage|citychase (and the older chase, shootout,
+// pursuit, beach and title). Each one starts a real game,
 // sets up a moment of it with the game's own systems (a mission step, a stolen car, the wanted
 // level, police units) and plays the real simulation forward for a few seconds with a scripted
 // hand on the controls, so every frame is the game's own code rendering its own state.
@@ -13,6 +14,10 @@ import { fireWeapon } from './combat.js';
 import { damageCharacter } from './characters.js';
 import { snapCamera } from './camera.js';
 import { spawnTrafficCar } from './traffic.js';
+import { placeRoadblock } from './roadblocks.js';
+import { RACES, startRace } from './races.js';
+import { applyUpgrades, garageBay } from './garage.js';
+import { addRespect } from './respect.js';
 
 /** A stand-in for the keyboard and mouse: which keys are held, and mouse buttons. */
 function scriptedInput(keys = [], mouse = {}) {
@@ -175,7 +180,141 @@ function title(game, menus) {
   menus.showTitle(true);
 }
 
-const SCENES = { chase, shootout, beach, pursuit, title };
+/** Puts Air 1 at (x, y, z) with its beam on the player (it has to be up: three stars or more). */
+function heliAt(game, x, y, z) {
+  const h = game.heli;
+  const p = game.player;
+  h.x = x;
+  h.y = y;
+  h.z = z;
+  h.vx = h.vz = 0;
+  h.yaw = Math.atan2(p.x - x, p.z - z);
+  h.spot.x = p.x;
+  h.spot.z = p.z;
+  h.spotting = true;
+}
+
+/** Cover: "Sunset Heat" at four stars, Voss's cash truck heading into a roadblock under Air 1's beam. */
+function heat(game) {
+  startGame(game);
+  game.player.money = 18450;
+  game.respect = 1180;
+  giveWeapon(game.player, 'smg', 150);
+  selectWeapon(game.player, 'smg');
+  game.story.index = 7;
+  startMission(game, 7);
+  game.hud.clearLines();
+  const truck = game.story.active.cars.truck;
+  truck.x = 366.6;
+  truck.z = 40;
+  truck.yaw = 0;
+  truck.vz = 22;
+  enterVehicle(game, game.player, truck);
+  run(game, 0.2, scriptedInput(['KeyW']));
+  game.roadblockTimer = 99;
+  policeBehind(game, 366.0, 30, 0, 24);
+  policeBehind(game, 370.6, 20, 0, 24.5);
+  game.player.armor = 70;
+  game.player.health = 74;
+  run(game, 1.0, scriptedInput(['KeyW']));
+  placeRoadblock(game, { x: 370, z: truck.z + 24, alongX: false, dir: 1 });
+  run(game, 0.15, scriptedInput(['KeyW']));
+  game.story.active.timer = 41;
+  heliAt(game, truck.x + 8, 25, truck.z + 64);
+  game.wanted.seen = true;
+  game.hud.clearMessages();
+  game.hud.notify('ROADBLOCK AHEAD! Ram the gap between the cruisers or take another street.');
+  addRespect(game, 12, '4-star heat');
+  game.hud.say('Val', 'Air 1 has you in the light. Smash through that roadblock!');
+  settleCamera(game, truck.yaw - 0.22, 0.17);
+  heliAt(game, truck.x + 8, 25, truck.z + 64);
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+}
+
+/** The Sunset Boulevard Run: four cars side by side on the beach road, the pier and its wheel ahead. */
+function race(game) {
+  startGame(game);
+  game.player.money = 9300;
+  game.respect = 420;
+  game.story.index = 7;
+  const def = RACES.find((r) => r.id === 'beach');
+  const car = createVehicle(game, 'kestrel', def.start.x, def.start.z, 0, 0xff3b30);
+  applyUpgrades(car, { engine: 3, armour: 0, tyres: 2 });
+  enterVehicle(game, game.player, car);
+  const r = startRace(game, def);
+  r.countdown = 0;
+  r.time = 21.4;
+  const lanes = [[-3.4, 150, 30], [3.4, 155, 29], [-3.4, 164, 28.5], [3.6, 171, 28]];
+  r.racers.forEach((racer, n) => {
+    const [x, z, speed] = lanes[n];
+    racer.car.x = x;
+    racer.car.z = z;
+    racer.car.yaw = 0;
+    racer.car.vz = speed;
+    racer.car.vx = 0;
+  });
+  run(game, 1.1, scriptedInput(['KeyW']));
+  game.hud.clearMessages();
+  game.hud.say('Rico', 'You drive like a tourist, Reyes! See you at the docks!');
+  settleCamera(game, car.yaw + 0.5, 0.16);
+}
+
+/** Dex's Garage: a pink Kestrel in the bay with its scoop, wing, bull bar and gold rims, the menu open. */
+function garage(game, menus) {
+  startGame(game);
+  game.player.money = 14250;
+  game.respect = 610;
+  game.story.index = 7;
+  const bay = garageBay(game);
+  const car = createVehicle(game, 'kestrel', bay.x, bay.z, -Math.PI / 2 + 0.25, 0xff6b9d);
+  applyUpgrades(car, { engine: 3, armour: 2, tyres: 2 });
+  enterVehicle(game, game.player, car);
+  run(game, 0.5, scriptedInput());
+  game.hud.clearMessages();
+  addRespect(game, 15, 'Engine upgrade');
+  game.hud.say('Dex', 'Race engine, slick tyres, plates on the doors. Rico is going to cry.');
+  settleCamera(game, car.yaw + 2.2, 0.22);
+  game.garageInside = true;
+  game.garageBeacon.mesh.visible = game.garageBeacon.arrow.visible = false;
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+  game.mode = 'garage';
+  menus.showGarage(game);
+}
+
+/** A three-star chase through Downtown's towers: the courier ahead, cruisers behind, Air 1 overhead. */
+function citychase(game) {
+  startGame(game);
+  game.player.money = 6120;
+  game.respect = 330;
+  giveWeapon(game.player, 'pistol', 40);
+  selectWeapon(game.player, 'pistol');
+  game.story.index = 4;
+  startMission(game, 4);
+  game.hud.clearLines();
+  const courier = game.story.active.cars.courier;
+  courier.x = 299.4;
+  courier.z = 446;
+  courier.vz = -21;
+  const car = createVehicle(game, 'tarpon', 299.4, 466, Math.PI, 0x2e7d32);
+  applyUpgrades(car, { engine: 1, armour: 1, tyres: 1 });
+  car.vz = -24;
+  enterVehicle(game, game.player, car);
+  setWanted(game, 3);
+  run(game, 0.2, scriptedInput(['KeyW']));
+  policeBehind(game, 296.2, 478, Math.PI, 25);
+  policeBehind(game, 300.6, 488, Math.PI, 25);
+  run(game, 1.1, scriptedInput(['KeyW']));
+  heliAt(game, car.x + 8, 24, car.z + 40);
+  game.wanted.seen = true;
+  game.hud.clearMessages();
+  game.hud.say('Dex', 'Cops and a chopper on you and the courier is getting away. Stay on him!');
+  // Looking back past the car at the cruisers on its bumper and Air 1 above them.
+  settleCamera(game, car.yaw + Math.PI - 0.35, 0.02);
+  heliAt(game, car.x + 8, 24, car.z + 40);
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+}
+
+const SCENES = { heat, race, garage, citychase, chase, shootout, beach, pursuit, title };
 
 /** Stages the named scene (an unknown name is the title screen). Resolves once it is set. */
 export async function stageShot(game, name, menus) {

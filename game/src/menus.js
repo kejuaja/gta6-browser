@@ -15,6 +15,7 @@ const CONTROLS = [
   ['F or Enter', 'Get in / out of a car (steal it)'],
   ['Left mouse', 'Shoot / punch'],
   ['Walk into a $ marker', 'Shop at Bay Arms'],
+  ['Drive into G / R', "Dex's Garage / street race"],
   ['1 2 3 4 / wheel', 'Switch weapon'],
   ['R', 'Reload'],
   ['H', 'Horn'],

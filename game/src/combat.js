@@ -5,6 +5,7 @@ import { raySolids, rayCapsule, rayCar } from './physics.js';
 import { damageCharacter } from './characters.js';
 import { damageVehicle } from './vehicles.js';
 import { burst, tracer, flashAt, FX } from './effects.js';
+import { rayHelicopter, damageHelicopter } from './helicopter.js';
 
 /** What a ray meets first within `range`: { t, char, vehicle } (both null for a wall or nothing). */
 export function hitscan(game, o, d, range, ignore) {
@@ -23,6 +24,9 @@ export function hitscan(game, o, d, range, ignore) {
     const t = rayCar(o, d, v.x, v.z, v.yaw, v.spec.wid / 2, v.spec.hgt, v.spec.len / 2);
     if (t < best.t) best = { t, char: null, vehicle: v };
   }
+  // Only the player's bullets can reach Air 1.
+  const th = ignore === game.player ? rayHelicopter(game.heli, o, d, range) : Infinity;
+  if (th < best.t) best = { t: th, char: null, vehicle: null, heli: true };
   return best;
 }
 
@@ -67,7 +71,9 @@ export function fireWeapon(game, shooter, aim, accuracy = 1) {
     const t = Math.min(hit.t, w.range);
     const end = { x: o.x + d.x * t, y: o.y + d.y * t, z: o.z + d.z * t };
     if (n < 3) tracer(game.fx, o, end);
-    if (hit.char) {
+    if (hit.heli) {
+      damageHelicopter(game, game.heli, w.damage, shooter);
+    } else if (hit.char) {
       const head = end.y - hit.char.y > 1.6;
       // NPC fire is softened against the player: gunfights are meant to be won, not survived by luck.
       const scale = hit.char === game.player && shooter !== game.player ? 0.42 : head ? 2.5 : 1;

@@ -356,6 +356,8 @@ export function updatePolice(game, dt) {
     copOnFoot(game, c, dt);
     if (c.los && w.level > 0) seen = true;
   }
+  // Air 1's searchlight on the player is as good as a cop's eyes.
+  if (game.heli && game.heli.spotting) seen = true;
   if (w.level > 0) {
     w.seen = seen;
     if (seen) {

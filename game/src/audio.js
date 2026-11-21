@@ -13,6 +13,7 @@ export function createAudio(settings) {
   let noise;
   let engine;
   let siren;
+  let rotor;
   let ambient;
   let radio = { on: false, next: 0, step: 0 };
   const listener = { x: 0, z: 0 };
@@ -63,6 +64,32 @@ export function createAudio(settings) {
     sg.connect(sfx);
     so.start();
     siren = { gain: sg, osc: so };
+
+    // Air 1's rotor: low noise chopped by a 12 Hz square wave, silent until the helicopter is near.
+    const rg = ctx.createGain();
+    rg.gain.value = 0;
+    const chop = ctx.createGain();
+    chop.gain.value = 0.5;
+    const lfo = ctx.createOscillator();
+    lfo.type = 'square';
+    lfo.frequency.value = 12;
+    const depth = ctx.createGain();
+    depth.gain.value = 0.5;
+    lfo.connect(depth);
+    depth.connect(chop.gain);
+    lfo.start();
+    const rsrc = ctx.createBufferSource();
+    rsrc.buffer = noise;
+    rsrc.loop = true;
+    const rlp = ctx.createBiquadFilter();
+    rlp.type = 'lowpass';
+    rlp.frequency.value = 220;
+    rsrc.connect(rlp);
+    rlp.connect(chop);
+    chop.connect(rg);
+    rg.connect(sfx);
+    rsrc.start();
+    rotor = rg;
 
     const hum = loopNoise(300, 'lowpass', 0.025);
     const waves = loopNoise(900, 'bandpass', 0);
@@ -232,6 +259,10 @@ export function createAudio(settings) {
       for (const v of game.vehicles) if (v.siren && !v.wrecked) sirenNear = Math.max(sirenNear, near(v.x, v.z, 180));
       siren.gain.gain.setTargetAtTime(game.mode === 'play' ? sirenNear * 0.12 : 0, t, 0.1);
       siren.osc.frequency.setTargetAtTime(800 + Math.sin(t * Math.PI * 1.4) * 280, t, 0.02);
+
+      const heli = game.heli;
+      const chopper = heli && heli.active && game.mode !== 'title' ? near(heli.x, heli.z, 260) * 4 : 0;
+      rotor.gain.setTargetAtTime(Math.min(0.5, chopper * 0.5), t, 0.2);
 
       const beach = Math.max(0, 1 - Math.max(0, listener.x + 20) / 90);
       ambient.waves.gain.setTargetAtTime(beach * 0.06 * (0.7 + Math.sin(t * 0.5) * 0.3), t, 0.3);

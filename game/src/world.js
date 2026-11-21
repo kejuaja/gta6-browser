@@ -14,6 +14,7 @@ import { updateVehicle, collideVehicles, removeVehicle } from './vehicles.js';
 import { createCrowd, updateCrowd, populateCrowd, panic, pedHurt } from './crowd.js';
 import { updateTraffic, populateTraffic, scareTraffic, parkCar } from './traffic.js';
 import { createWanted, reportCrime, updatePolice, clearWanted } from './police.js';
+import { createHelicopter, updateHelicopter, syncHelicopter, resetHelicopter } from './helicopter.js';
 import { updateHostiles, hostileHurt } from './hostiles.js';
 import { createStory, updateStory, failMission } from './missions.js';
 import { createPickups, updatePickups, dropCash } from './pickups.js';
@@ -65,6 +66,7 @@ export function createGame(canvas, uiRoot, seed) {
     input: null,
     lastCar: null,
   };
+  game.heli = createHelicopter(scene);
   game.rig = createCameraRig(camera);
   game.rig.sensitivity = 0.0024 * settings.sensitivity;
   game.hud = createHud(uiRoot, city);
@@ -133,6 +135,8 @@ export function clearWorld(game) {
   removeBeacon(game.fx, game.paintBeacon);
   removeBeacon(game.fx, game.shopBeacon);
   clearWanted(game);
+  resetHelicopter(game.heli);
+  game.heli.cooldown = 0;
   game.hud.objective('');
   game.hud.clearLines();
 }
@@ -261,6 +265,7 @@ export function stepGame(game, dt, input) {
   if (playing) guarded(game, (g, s) => updatePlayer(g, s, input), dt);
   guarded(game, updateTraffic, dt);
   if (game.mode !== 'title') {
+    guarded(game, updateHelicopter, dt);
     guarded(game, updatePolice, dt);
     guarded(game, updateHostiles, dt);
   }
@@ -307,6 +312,7 @@ export function frameGame(game, dt, mouse) {
   } else updateCamera(game.rig, game, dt, game.mode === 'play' ? mouse : { dx: 0, dy: 0 });
   const focus = game.mode === 'title' ? { x: TITLE_FOCUS.x + 60, z: TITLE_FOCUS.z } : { x: p.x, z: p.z };
   updateCityscape(game.cs, dt, focus, game.three.camera);
+  syncHelicopter(game, dt);
   if (game.mode !== 'title') game.hud.update(game, dt);
   game.audio.setListener(focus.x, focus.z);
   game.audio.update(game);

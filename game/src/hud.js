@@ -245,6 +245,25 @@ function blipShape(g, x, y, color, shape, size = 6) {
   g.strokeStyle = '#111';
   g.lineWidth = 2;
   g.beginPath();
+  if (shape === 'spot') {
+    g.fillStyle = 'rgba(255,240,160,0.45)';
+    g.arc(x, y, size, 0, Math.PI * 2);
+    g.fill();
+    return;
+  }
+  if (shape === 'heli') {
+    g.arc(x, y, size, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    g.strokeStyle = '#fff';
+    g.beginPath();
+    g.moveTo(x - size - 4, y - size - 4);
+    g.lineTo(x + size + 4, y + size + 4);
+    g.moveTo(x + size + 4, y - size - 4);
+    g.lineTo(x - size - 4, y + size + 4);
+    g.stroke();
+    return;
+  }
   if (shape === 'square') g.rect(x - size, y - size, size * 2, size * 2);
   else if (shape === 'diamond') {
     g.moveTo(x, y - size - 2);
@@ -272,6 +291,11 @@ export function mapBlips(game) {
   const shop = game.city.pois.shop;
   out.push({ x: shop.x, z: shop.z, color: '#3fd0ff', shape: 'square', label: '$', size: 5 });
   const flash = Math.floor(game.time * 4) % 2 === 0;
+  const heli = game.heli;
+  if (heli && heli.active && !heli.down) {
+    out.push({ x: heli.spot.x, z: heli.spot.z, shape: 'spot', size: 8 });
+    out.push({ x: heli.x, z: heli.z, color: flash ? '#ff3030' : '#3060ff', shape: 'heli', size: 5, edge: true });
+  }
   for (const v of game.vehicles) if (v.spec.police && v.siren) out.push({ x: v.x, z: v.z, color: flash ? '#ff3030' : '#3060ff', shape: 'square', size: 4 });
   for (const c of game.chars) if (c.kind === 'cop' && c.alive && !c.vehicle && game.wanted.level > 0) out.push({ x: c.x, z: c.z, color: flash ? '#ff3030' : '#3060ff', shape: 'circle', size: 3 });
   return out;

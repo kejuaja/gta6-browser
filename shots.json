@@ -1,5 +1,6 @@
 [
-  { "name": "1-start.jpg", "query": "?shot=start&seed=1" },
-  { "name": "2-play.jpg", "query": "?shot=play&seed=1" },
-  { "name": "3-end.jpg", "query": "?shot=end&seed=1" }
+  { "name": "1-chase.jpg", "query": "?shot=chase&seed=1", "shows": "Three-star police chase on the beach road: HUD, minimap, mission objective, the pier's wheel" },
+  { "name": "2-shootout.jpg", "query": "?shot=shootout&seed=1", "shows": "On-foot SMG gunfight with Voss enforcers on the Saltmarsh quay" },
+  { "name": "3-pursuit.jpg", "query": "?shot=pursuit&seed=1", "shows": "Mission 'Hot Pursuit': chasing the courier through Neon Strip and Downtown" },
+  { "name": "4-title.jpg", "query": "?shot=title&seed=1", "shows": "Title screen over a live view of the city, beach and pier" }
 ]

@@ -1,53 +1,103 @@
-// Keyboard and pointer input. Held keys give a steering direction; one-shot presses (start or
-// restart, pause) are queued as bit flags and taken once by the loop, so a press between two
-// frames is never lost and never counted twice.
+// Keyboard and mouse: keys held, keys pressed since they were last handled, mouse movement (with
+// pointer lock while playing) and buttons.
 
-export const ACTION_CONFIRM = 1;
-export const ACTION_PAUSE = 2;
+export function createInput(canvas) {
+  const held = new Set();
+  const pressed = new Set();
+  const mouse = { dx: 0, dy: 0, left: false, right: false, leftPressed: false, wheel: 0 };
+  let locked = false;
 
-const LEFT = new Set(['ArrowLeft', 'KeyA']);
-const RIGHT = new Set(['ArrowRight', 'KeyD']);
-const CONFIRM = new Set(['Space', 'Enter']);
-const PAUSE = new Set(['KeyP', 'Escape']);
-
-export function createInput(target) {
-  let left = false;
-  let right = false;
-  let actions = 0;
-
-  window.addEventListener('keydown', (event) => {
-    if (LEFT.has(event.code)) left = true;
-    else if (RIGHT.has(event.code)) right = true;
-    else if (CONFIRM.has(event.code)) {
-      if (!event.repeat) actions |= ACTION_CONFIRM;
-    } else if (PAUSE.has(event.code)) {
-      if (!event.repeat) actions |= ACTION_PAUSE;
-    } else return;
-    event.preventDefault();
+  window.addEventListener('keydown', (e) => {
+    if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) e.preventDefault();
+    if (!held.has(e.code)) pressed.add(e.code);
+    held.add(e.code);
   });
-  window.addEventListener('keyup', (event) => {
-    if (LEFT.has(event.code)) left = false;
-    else if (RIGHT.has(event.code)) right = false;
-  });
-  // A key released while the tab is hidden never sends keyup: let go of everything on blur.
+  window.addEventListener('keyup', (e) => held.delete(e.code));
   window.addEventListener('blur', () => {
-    left = false;
-    right = false;
+    held.clear();
+    mouse.left = mouse.right = false;
   });
-  target.addEventListener('pointerdown', () => {
-    actions |= ACTION_CONFIRM;
+  // Camera modes: 'hold' turns the camera only while the right (or middle) button is held and never
+  // captures the mouse; 'capture' locks the pointer so every movement turns it (and, if the browser
+  // refuses the lock, dragging with any button does).
+  let mode = 'hold';
+  window.addEventListener('mousemove', (e) => {
+    const looking = mode === 'hold' ? (e.buttons & 6) !== 0 : locked || e.buttons !== 0;
+    if (!looking) return;
+    let dx = e.movementX || 0;
+    let dy = e.movementY || 0;
+    // Chrome on Windows sometimes reports one huge jump (a fast flick, the cursor at a screen
+    // edge): that is what spun the camera round. Drop it, and cap the rest.
+    if (Math.abs(dx) > 250 || Math.abs(dy) > 250) return;
+    dx = Math.max(-80, Math.min(80, dx));
+    dy = Math.max(-80, Math.min(80, dy));
+    mouse.dx += dx;
+    mouse.dy += dy;
+  });
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 0) {
+      mouse.left = true;
+      mouse.leftPressed = true;
+    }
+    if (e.button === 2) mouse.right = true;
+  });
+  window.addEventListener('mouseup', (e) => {
+    if (e.button === 0) mouse.left = false;
+    if (e.button === 2) mouse.right = false;
+  });
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  window.addEventListener('wheel', (e) => {
+    mouse.wheel += Math.sign(e.deltaY);
+  }, { passive: true });
+  document.addEventListener('pointerlockchange', () => {
+    locked = document.pointerLockElement === canvas;
   });
 
   return {
-    /** -1 for left, 1 for right, 0 for neither or both. */
-    direction() {
-      return (right ? 1 : 0) - (left ? 1 : 0);
+    mouse,
+    down: (code) => held.has(code),
+    pressed: (code) => pressed.has(code),
+    get locked() {
+      return locked;
     },
-    /** The one-shot presses since the last call, as ACTION_* flags. */
-    takeActions() {
-      const taken = actions;
-      actions = 0;
-      return taken;
+    get mode() {
+      return mode;
+    },
+    /** 'hold' or 'capture'; leaving 'capture' releases the mouse. */
+    setMode(m) {
+      mode = m === 'capture' ? 'capture' : 'hold';
+      if (mode === 'hold' && locked) document.exitPointerLock();
+    },
+    lock() {
+      if (mode !== 'capture') return;
+      if (!locked && canvas.requestPointerLock) {
+        try {
+          const p = canvas.requestPointerLock();
+          if (p && p.catch) p.catch(() => {});
+        } catch {
+          // Pointer lock can be refused (an embedded page); the mouse then only clicks.
+        }
+      }
+    },
+    unlock() {
+      if (locked) document.exitPointerLock();
+    },
+    /** Movement axes from WASD or the arrows: x right, y forward, each -1..1. */
+    axes() {
+      const x = (held.has('KeyD') || held.has('ArrowRight') ? 1 : 0) - (held.has('KeyA') || held.has('ArrowLeft') ? 1 : 0);
+      const y = (held.has('KeyW') || held.has('ArrowUp') ? 1 : 0) - (held.has('KeyS') || held.has('ArrowDown') ? 1 : 0);
+      return { x, y };
+    },
+    /** After the first fixed step that saw them: presses are acted on once, never dropped by a frame with no step. */
+    clearPresses() {
+      pressed.clear();
+      mouse.leftPressed = false;
+      mouse.wheel = 0;
+    },
+    /** After the camera has turned by this frame's mouse movement. */
+    clearMotion() {
+      mouse.dx = 0;
+      mouse.dy = 0;
     },
   };
 }

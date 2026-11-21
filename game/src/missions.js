@@ -2,7 +2,7 @@
 // somewhere, steal a car, collect, kill, chase, lose the cops); the runner shows each step's
 // objective and dialogue, marks its target on the map, checks it, pays out and fails it when
 // the player dies, is busted or loses what the mission needed.
-import { WEAPONS } from './config.js';
+import { WEAPONS, WANTED_THRESHOLDS } from './config.js';
 import { LOOKS } from './models.js';
 import { addBeacon, removeBeacon, moveBeacon, burst, FX } from './effects.js';
 import { createVehicle } from './vehicles.js';
@@ -11,6 +11,7 @@ import { spawnPed } from './crowd.js';
 import { spawnHostile } from './hostiles.js';
 import { giveWeapon } from './player.js';
 import { setWanted, clearWanted } from './police.js';
+import { RACES, startRace } from './races.js';
 
 /** The cast, so the dialogue's names stay one spelling. */
 const NICO = 'Nico';
@@ -19,6 +20,7 @@ const DEX = 'Dex';
 const VAL = 'Val';
 const NURSE = 'Nurse Okoro';
 const BRANNIGAN = 'Sgt. Brannigan';
+const RICO = 'Rico Vance';
 
 export const STORY = [
   {
@@ -140,9 +142,56 @@ export const STORY = [
     ],
     outro: [
       [LUCIA, 'It is on every channel. Voss arrested, the ledger on the front page. You did it, Nico.'],
-      [NICO, 'Palmera Bay is a little cleaner tonight. Not clean. Just cleaner.'],
+      [NICO, 'Brannigan is done. Voss is next.'],
     ],
     reward: 5000,
+    respect: 70,
+  },
+  {
+    id: 'pinkslips',
+    title: 'Pink Slips',
+    start: 'garage',
+    intro: [
+      [DEX, 'Bad news, brother. Voss made bail in an hour. Judges are cheap in this town.'],
+      [DEX, 'His nephew Rico runs the street races on the Strip, and Rico talks when he loses. Let me tune your ride first. This one is on me.'],
+    ],
+    cashAtStart: 1000,
+    steps: [
+      { type: 'getCar', text: 'Get a car: Dex only tunes what you drive in.' },
+      { type: 'upgrade', text: "Drive into Dex's green bay (G on the map) and fit any upgrade." },
+      { type: 'goto', x: 148, z: 160, radius: 6, text: 'Drive to the Neon Strip race start.', say: [[RICO, 'The dead man wants to race? Fine. You lose, the car is mine.']] },
+      { type: 'race', race: 'strip', text: 'Beat Rico Vance in the Neon Strip Sprint.' },
+    ],
+    outro: [
+      [RICO, 'Okay, okay! Uncle Harlan is leaving tonight. His cash goes out of Coral Heights in a black Duna, all of it.'],
+      [NICO, 'Then tonight it gets a new driver.'],
+    ],
+    reward: 2500,
+    respect: 80,
+  },
+  {
+    id: 'sunsetheat',
+    title: 'Sunset Heat',
+    start: 'club',
+    intro: [
+      [VAL, "Take Voss's money and he cannot buy another judge. But the whole department still answers to his cash."],
+      [VAL, 'The moment you touch that truck, every cop in the bay comes, and Air 1 with them. Keep it in one piece.'],
+    ],
+    weaponsAtStart: [['smg', 120]],
+    steps: [
+      { type: 'spawnCar', id: 'truck', model: 'duna', color: 0x1c1c1e, x: 523, z: 175, yaw: Math.PI },
+      { type: 'enter', car: 'truck', text: "Steal Voss's black Duna in Coral Heights." },
+      { type: 'wanted', level: 4, say: [[NICO, 'Roadblocks and a helicopter. Voss is paying overtime tonight.']] },
+      { type: 'survive', car: 'truck', seconds: 60, floor: 4, text: 'Survive the heat: keep the cash truck alive. Ram the roadblocks, outrun Air 1.' },
+      { type: 'deliver', car: 'truck', carName: 'the Duna', poi: 'safehouse', radius: 10, text: 'Bring the truck to the safehouse in Coral Heights.', lose: 'Lose the cops before you go to the safehouse. Paint Shack in the Docks helps ($100).', say: [[VAL, 'Air 1 is low on fuel and pulling back. Now lose the rest of them!']] },
+    ],
+    outro: [
+      [VAL, 'Every dollar Harlan Voss ever stole, sitting in your garage. No judge will touch him now.'],
+      [LUCIA, 'They took him at the airstrip with empty pockets. Come home, mijo. Dinner is on the table.'],
+      [NICO, 'Palmera Bay is a little cleaner tonight. Not clean. Just cleaner.'],
+    ],
+    reward: 10000,
+    respect: 150,
     finale: true,
   },
 ];
@@ -262,13 +311,13 @@ function checkStep(game, m, dt) {
       if (!v || v.wrecked) return fail(game, 'The car was destroyed.');
       if (p.vehicle !== v) {
         setTarget(game, m, v.x, v.z, 0x5fb3ff, 2.6);
-        game.hud.objective('Get back in the Tarpon.');
+        game.hud.objective(`Get back in ${step.carName ?? 'the Tarpon'}.`);
         return false;
       }
       const t = poiPos(game, step);
       setTarget(game, m, t.x, t.z, 0xffd23f, 5);
       if (game.wanted.level > 0) {
-        game.hud.objective('Lose the cops before you go to the garage. Paint Shack in the Docks helps ($100).');
+        game.hud.objective(step.lose ?? 'Lose the cops before you go to the garage. Paint Shack in the Docks helps ($100).');
         return false;
       }
       game.hud.objective(step.text);
@@ -328,6 +377,50 @@ function checkStep(game, m, dt) {
     case 'loseWanted':
       m.target = null;
       return game.wanted.level === 0;
+    case 'upgrade': {
+      const bay = game.garageBeacon;
+      if (bay) setTarget(game, m, bay.x, bay.z, 0xb4ff3f, 3.2);
+      const v = p.vehicle;
+      if (!v) game.hud.objective('Get in a car first.');
+      else game.hud.objective(step.text);
+      return Boolean(v && v.upgrades && (v.upgrades.engine || v.upgrades.armour || v.upgrades.tyres));
+    }
+    case 'race': {
+      if (!m.state.race) {
+        if (!p.vehicle) {
+          game.hud.objective('Get in a car to race.');
+          return false;
+        }
+        m.state.race = startRace(game, RACES.find((r) => r.id === step.race), { mission: true });
+        return false;
+      }
+      if (game.race) return false;
+      if (m.state.race.result === 'won') return true;
+      return fail(game, m.state.race.result === 'placed' ? 'Rico beat you to the line.' : 'You left the race.');
+    }
+    case 'survive': {
+      const v = m.cars[step.car];
+      if (!v || v.wrecked || v.burn > 0) return fail(game, "Voss's cash went up in smoke.");
+      const w = game.wanted;
+      if (!m.state.started) {
+        m.state.started = true;
+        m.timer = step.seconds;
+        w.floor = step.floor;
+      }
+      m.target = null;
+      if (p.vehicle !== v) {
+        setTarget(game, m, v.x, v.z, 0x5fb3ff, 2.6);
+        game.hud.objective('Get back in the truck!');
+      } else game.hud.objective(step.text);
+      m.timer -= dt;
+      if (m.timer > 0) return false;
+      // The heat eases to three stars: Air 1 stays up, the roadblocks stop.
+      m.timer = 0;
+      w.floor = 0;
+      w.heat = Math.min(w.heat, WANTED_THRESHOLDS[3] + 0.01);
+      w.level = Math.min(w.level, 3);
+      return true;
+    }
     default:
       return true;
   }
@@ -370,6 +463,7 @@ export function startMission(game, index) {
   game.hud.banner(def.title, 'mission');
   if (def.intro) say(game, def.intro);
   if (def.weaponsAtStart) for (const [id, n] of def.weaponsAtStart) giveWeapon(game.player, id, n);
+  if (def.cashAtStart) game.player.money += def.cashAtStart;
   if (def.weaponsAtStart) game.hud.notify(`Got the ${def.weaponsAtStart.map(([id]) => WEAPONS[id].name).join(', ')}.`);
   startStep(game, m);
 }

@@ -15,6 +15,7 @@ import { createCrowd, updateCrowd, populateCrowd, panic, pedHurt } from './crowd
 import { updateTraffic, populateTraffic, scareTraffic, parkCar } from './traffic.js';
 import { createWanted, reportCrime, updatePolice, clearWanted } from './police.js';
 import { createHelicopter, updateHelicopter, syncHelicopter, resetHelicopter } from './helicopter.js';
+import { updateRoadblocks, clearRoadblocks } from './roadblocks.js';
 import { updateHostiles, hostileHurt } from './hostiles.js';
 import { createStory, updateStory, failMission } from './missions.js';
 import { createPickups, updatePickups, dropCash } from './pickups.js';
@@ -67,6 +68,7 @@ export function createGame(canvas, uiRoot, seed) {
     lastCar: null,
   };
   game.heli = createHelicopter(scene);
+  game.roadblocks = [];
   game.rig = createCameraRig(camera);
   game.rig.sensitivity = 0.0024 * settings.sensitivity;
   game.hud = createHud(uiRoot, city);
@@ -137,6 +139,7 @@ export function clearWorld(game) {
   clearWanted(game);
   resetHelicopter(game.heli);
   game.heli.cooldown = 0;
+  clearRoadblocks(game);
   game.hud.objective('');
   game.hud.clearLines();
 }
@@ -234,6 +237,7 @@ function finishRespawn(game) {
     }
   }
   for (const c of [...game.chars]) if (c.kind === 'cop' || c.kind === 'gang' || c.kind === 'target') removeCharacter(game, c);
+  clearRoadblocks(game);
   clearWanted(game);
   placePlayer(game, at.x, at.z, at.yaw);
   p.armor = 0;
@@ -266,6 +270,7 @@ export function stepGame(game, dt, input) {
   guarded(game, updateTraffic, dt);
   if (game.mode !== 'title') {
     guarded(game, updateHelicopter, dt);
+    guarded(game, updateRoadblocks, dt);
     guarded(game, updatePolice, dt);
     guarded(game, updateHostiles, dt);
   }

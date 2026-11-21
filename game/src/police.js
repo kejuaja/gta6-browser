@@ -88,7 +88,7 @@ function playerTarget(game) {
   return { x: p.x, z: p.z };
 }
 
-function makeCop(game, x, z, yaw) {
+export function makeCop(game, x, z, yaw) {
   const c = createCharacter(game, 'cop', x, z, LOOKS.cop, { health: 90, weapon: 'pistol', yaw, state: 'engage' });
   c.fireCooldown = 1 + game.rng.next();
   return c;
@@ -270,7 +270,10 @@ function copOnFoot(game, c, dt) {
     return;
   }
   c.aiming = c.los && d < 60;
-  if (!c.los || d > 22) moveCharacter(game, c, dx / d, dz / d, 5.4, dt, c.los && d < 40 ? face : null);
+  // A roadblock's crew holds its post behind the cruisers until the player comes close.
+  if (c.post && d > 28) {
+    moveCharacter(game, c, 0, 0, 0, dt, face);
+  } else if (!c.los || d > 22) moveCharacter(game, c, dx / d, dz / d, 5.4, dt, c.los && d < 40 ? face : null);
   else if (d < 7) moveCharacter(game, c, -dx / d, -dz / d, 2.2, dt, face);
   else {
     const strafe = Math.sin(game.time * 0.7 + c.id) > 0 ? 1 : -1;

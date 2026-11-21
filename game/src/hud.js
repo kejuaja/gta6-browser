@@ -296,6 +296,7 @@ export function mapBlips(game) {
     out.push({ x: heli.spot.x, z: heli.spot.z, shape: 'spot', size: 8 });
     out.push({ x: heli.x, z: heli.z, color: flash ? '#ff3030' : '#3060ff', shape: 'heli', size: 5, edge: true });
   }
+  for (const rb of game.roadblocks ?? []) out.push({ x: rb.x, z: rb.z, color: '#ff9f1a', shape: 'square', label: '!', size: 6, edge: true });
   for (const v of game.vehicles) if (v.spec.police && v.siren) out.push({ x: v.x, z: v.z, color: flash ? '#ff3030' : '#3060ff', shape: 'square', size: 4 });
   for (const c of game.chars) if (c.kind === 'cop' && c.alive && !c.vehicle && game.wanted.level > 0) out.push({ x: c.x, z: c.z, color: flash ? '#ff3030' : '#3060ff', shape: 'circle', size: 3 });
   return out;

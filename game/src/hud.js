@@ -5,6 +5,7 @@
 import { WEAPONS, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
 import { nextMissionMarker } from './missions.js';
 import { raceMarkers, raceStatus } from './races.js';
+import { rankInfo } from './respect.js';
 
 const MAP_X0 = -180;
 const MAP_Z0 = -60;
@@ -56,6 +57,11 @@ export function createHud(root, city) {
   const top = el('div', 'hud-top', hud);
   const clock = el('div', 'hud-clock', top);
   const money = el('div', 'hud-money', top);
+  const rank = el('div', 'hud-rank', top);
+  const rankName = el('span', 'name', rank);
+  const rankBar = el('div', 'rank-bar', rank);
+  const rankFill = el('div', 'fill', rankBar);
+  const rankPop = el('div', 'hud-rank-pop', top);
   const weapon = el('div', 'hud-weapon', top);
   const weaponName = el('div', 'hud-weapon-name', weapon);
   const ammo = el('div', 'hud-ammo', weapon);
@@ -170,6 +176,12 @@ export function createHud(root, city) {
       const minutes = Math.floor(game.clock) % (24 * 60);
       clock.textContent = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
       money.textContent = `$${Math.floor(p.money).toLocaleString('en-US')}`;
+      const ri = rankInfo(game);
+      rankName.textContent = `${ri.name.toUpperCase()} · ${ri.respect} RESPECT`;
+      rankFill.style.width = `${Math.round(ri.progress * 100)}%`;
+      const pop = game.respectPop;
+      rankPop.classList.toggle('show', Boolean(pop && pop.time > 0));
+      if (pop && pop.time > 0) rankPop.textContent = `+${pop.amount} RESPECT  ${pop.reason}`;
       const wdef = WEAPONS[p.weapon];
       weaponName.textContent = wdef.name;
       const a = p.ammo[p.weapon];

@@ -384,7 +384,9 @@ function passMission(game) {
   if (m.def.weapons) for (const [id, n] of m.def.weapons) giveWeapon(game.player, id, n);
   game.stats.missions = story.index;
   game.hud.objective('');
-  game.hud.banner('MISSION PASSED', 'passed', `+$${m.def.reward.toLocaleString('en-US')}`);
+  const respect = m.def.respect ?? 20 + m.index * 10;
+  game.hud.banner('MISSION PASSED', 'passed', `+$${m.def.reward.toLocaleString('en-US')}  +${respect} RESPECT`);
+  if (game.addRespect) game.addRespect(respect, 'Mission passed');
   if (game.audio) game.audio.jingle();
   if (m.def.outro) say(game, m.def.outro);
   if (m.def.weapons) game.hud.notify(`Got the ${m.def.weapons.map(([id]) => WEAPONS[id].name).join(', ')}.`);

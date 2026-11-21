@@ -22,6 +22,7 @@ import { createStory, updateStory, failMission } from './missions.js';
 import { createPickups, updatePickups, dropCash } from './pickups.js';
 import { createShop, updateShop } from './shop.js';
 import { createGarage, updateGarage } from './garage.js';
+import { addRespect, updateRespect, resetRespectWatch } from './respect.js';
 import { createHud } from './hud.js';
 import { createAudio } from './audio.js';
 import { saveGame as storeSave, loadSettings } from './save.js';
@@ -70,6 +71,7 @@ export function createGame(canvas, uiRoot, seed) {
     lastCar: null,
   };
   game.heli = createHelicopter(scene);
+  game.respect = 0;
   game.roadblocks = [];
   game.rig = createCameraRig(camera);
   game.rig.sensitivity = 0.0024 * settings.sensitivity;
@@ -116,6 +118,12 @@ function wireHooks(game) {
   game.onWantedLost = () => game.hud.notify('You lost the cops.');
   game.onBusted = () => {
     if (game.mode === 'play' && game.player.alive) beginRespawn(game, 'busted');
+  };
+  game.addRespect = (amount, reason) => addRespect(game, amount, reason);
+  game.onHeliDown = () => {
+    game.stats.helisDowned = (game.stats.helisDowned ?? 0) + 1;
+    game.hud.notify('Air 1 is down! The whole bay saw that.');
+    addRespect(game, 50, 'Helicopter down');
   };
   game.onFinale = () => {
     game.finaleTimer = 9;
@@ -172,6 +180,8 @@ export function startGame(game, save = null) {
   game.story = createStory(save ? save.story : 0);
   game.stats = save ? { ...freshStats(), ...save.stats } : freshStats();
   game.progress = { tokens: save ? [...save.tokens] : [] };
+  game.respect = save ? save.respect ?? 0 : 0;
+  resetRespectWatch(game);
   p.money = save ? save.money : 0;
   p.ammo = { fists: { mag: 0, reserve: 0 } };
   if (save) for (const [id, a] of Object.entries(save.ammo)) if (id !== 'fists') giveWeapon(p, id, a.mag + a.reserve);
@@ -216,6 +226,8 @@ function beginRespawn(game, kind) {
   const p = game.player;
   game.mode = kind;
   game.deathTimer = 4;
+  // A chase that ends in a hospital or a cell is no escape: no respect for it.
+  if (game.respectSeen) game.respectSeen.level = game.respectSeen.peak = 0;
   if (kind === 'dead') game.stats.deaths += 1;
   else game.stats.busts += 1;
   game.failedOnRespawn = Boolean(game.story.active);
@@ -295,6 +307,7 @@ export function stepGame(game, dt, input) {
   }
   if (playing) {
     guarded(game, updateRaces, dt);
+    guarded(game, updateRespect, dt);
     guarded(game, updateStory, dt);
     guarded(game, updatePickups, dt);
     guarded(game, updateShop, dt);

@@ -8,6 +8,7 @@ import { removeCharacter } from './characters.js';
 import { addBeacon, removeBeacon, moveBeacon } from './effects.js';
 import { angleDiff } from './physics.js';
 import { snapCamera } from './camera.js';
+import { rankOf, RANKS } from './respect.js';
 
 /** The routes: every checkpoint is a junction, so each leg is a straight run down one road. */
 export const RACES = [
@@ -27,6 +28,7 @@ export const RACES = [
     checkpoints: [[0, 222], [0, 444], [0, 518], [148, 518], [148, 592], [370, 592], [370, 518]],
     prize: 2500,
     respect: 60,
+    minRank: 2,
     rivals: [['kestrel', 0xff6b9d, 'Rico'], ['kestrel', 0x111111, 'Juno'], ['tarpon', 0xf5f5f5, 'Mags']],
   },
 ];
@@ -214,7 +216,11 @@ export function updateRaces(game, dt) {
         m.beacon = null;
       }
       if (!open || !p.vehicle || game.raceCooldown > 0 || p.vehicle.wrecked) continue;
-      if (Math.hypot(p.vehicle.x - s.x, p.vehicle.z - s.z) < 5) startRace(game, m.def);
+      if (Math.hypot(p.vehicle.x - s.x, p.vehicle.z - s.z) >= 5) continue;
+      if (m.def.minRank && rankOf(game.respect ?? 0) < m.def.minRank) {
+        game.hud.notify(`${m.def.name}: the crew only races a ${RANKS[m.def.minRank].name} or better. Earn respect first.`);
+        game.raceCooldown = 6;
+      } else startRace(game, m.def);
     }
     return;
   }

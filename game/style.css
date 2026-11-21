@@ -102,7 +102,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .stat { display: flex; justify-content: space-between; width: 520px; font: 600 18px/2.1 var(--text); border-bottom: 1px solid rgba(255,255,255,0.12); }
 .stat .v { color: var(--sun); font-weight: 900; }
 .page.hidden { display: none; }
-.page:has(.stat) { flex-direction: column; gap: 0; }
+.page:has(.stat) { display: grid; grid-template-columns: 1fr 1fr; column-gap: 36px; align-content: start; }
+.page .stat { width: auto; }
 .slider { display: flex; align-items: center; gap: 18px; font: 700 17px var(--text); margin: 14px 0; pointer-events: auto; }
 .slider span { min-width: 190px; }
 .slider input { width: 260px; accent-color: var(--pink); }
@@ -145,3 +146,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .garage-panel { width: min(470px, 44vw); border-color: #b4ff3f; box-shadow: 0 0 40px rgba(180, 255, 63, 0.3); }
 .garage-panel .shop-title { color: #b4ff3f; text-shadow: 0 0 14px rgba(180, 255, 63, 0.7); }
 .garage-panel .shop-item:hover { background: rgba(180, 255, 63, 0.15); border-color: #b4ff3f; }
+.hud-rank { margin-top: 2px; display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.hud-rank .name { font: 800 13px var(--text); letter-spacing: 1px; color: #ffd23f; text-shadow: 1px 1px 0 #000, 0 0 4px #000; }
+.rank-bar { width: 150px; height: 6px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.7); border-radius: 4px; overflow: hidden; }
+.rank-bar .fill { height: 100%; background: linear-gradient(90deg, #ff9500, #ffd23f); }
+.hud-rank-pop { font: 900 15px var(--display); color: #ffd23f; text-shadow: 2px 2px 0 #3b2300; opacity: 0; transition: opacity 0.3s; min-height: 1.2em; }
+.hud-rank-pop.show { opacity: 1; }

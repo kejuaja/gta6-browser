@@ -4,6 +4,7 @@ import { GAME_TITLE, GAME_SUBTITLE } from './config.js';
 import { drawFullMap } from './hud.js';
 import { STORY } from './missions.js';
 import { TOKEN_SPOTS } from './pickups.js';
+import { rankInfo } from './respect.js';
 
 const CONTROLS = [
   ['W A S D', 'Walk / drive'],
@@ -227,7 +228,10 @@ export function createMenus(root, handlers) {
       drawFullMap(mapCanvas, game.hud.base, game);
       statsPage.innerHTML = '';
       const s = game.stats;
+      const ri = rankInfo(game);
       const rows = [
+        ['Rank', ri.next ? `${ri.name} (${ri.toNext} respect to ${ri.next})` : `${ri.name} (top rank)`],
+        ['Respect', ri.respect],
         ['Story', `${game.story.index} of ${STORY.length} missions`],
         ['Next mission', STORY[game.story.index] ? STORY[game.story.index].title : 'Story complete'],
         ['Money', `$${Math.floor(game.player.money).toLocaleString('en-US')}`],
@@ -235,6 +239,9 @@ export function createMenus(root, handlers) {
         ['Cars stolen', s.carsStolen],
         ['People taken out', s.kills],
         ['Cops taken out', s.copKills],
+        ['Street races won', s.racesWon ?? 0],
+        ['Garage upgrades', s.upgrades ?? 0],
+        ['Helicopters downed', s.helisDowned ?? 0],
         ['Highest wanted level', '★'.repeat(s.maxWanted) || 'none'],
         ['Time on the streets', `${Math.floor(game.time / 60)} min`],
       ];

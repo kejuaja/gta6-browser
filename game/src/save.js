@@ -35,6 +35,7 @@ export function snapshot(game) {
     tokens: game.progress.tokens,
     stats: game.stats,
     garageCar: game.garageCar ?? null,
+    respect: game.respect ?? 0,
     at: game.city.pois.safehouse,
   };
 }

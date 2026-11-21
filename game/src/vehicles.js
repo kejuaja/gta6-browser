@@ -1,7 +1,7 @@
 // Cars: arcade driving physics with grip and handbrake drifts, crashes against buildings and each
 // other, running people over, damage, smoke, fire and explosions. Who is at the wheel (the
 // player, traffic, police) only changes the inputs handed to driveVehicle.
-import { makeCarMesh, charCarMesh } from './models.js';
+import { makeCarMesh, charCarMesh, disposeCarMesh } from './models.js';
 import { CAR_MODELS, WORLD } from './config.js';
 import { pushOutOfSolids, clampToLand } from './physics.js';
 import { damageCharacter } from './characters.js';
@@ -51,6 +51,7 @@ export function createVehicle(game, model, x, z, yaw, color = null) {
 
 export function removeVehicle(game, v) {
   game.three.scene.remove(v.mesh.root);
+  disposeCarMesh(v.mesh);
   const i = game.vehicles.indexOf(v);
   if (i >= 0) game.vehicles.splice(i, 1);
 }

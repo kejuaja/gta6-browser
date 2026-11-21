@@ -10,6 +10,7 @@
 
 Nico Reyes wakes up from a coma in St. Marguerite Medical and comes home to Palmera Bay, a sun-soaked coastal city that developer Harlan Voss is buying up block by block, with a crooked police sergeant on his payroll. Eight story missions take him from his aunt's diner on the beach to the docks where he was shot, and then after Voss's money.
 
+- **Sunset all the time**: a low sun over the ocean, an orange-and-gold sky, long shadows, and the city's lights on: every window glows, the street lamps throw pools of light, cars drive with their headlights on, and the Lucky Seven wheel is strung with bulbs.
 - **A city to explore** on foot and by car: Sunset Beach with its hotels and the Lucky Seven pier, the glass towers of Downtown, the Neon Strip, the houses of Coral Heights and the cranes of the Saltmarsh Docks.
 - **Traffic and pedestrians** that follow lanes, stop, honk, panic at gunfire and sometimes fight back.
 - **Cars to steal and drive**, six models with arcade handling, handbrake drifts, crashes, smoke, fire and explosions.

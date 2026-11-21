@@ -53,7 +53,7 @@ void main() {
   // Golden hour: warmer highlights, a touch more colour, lifted cool shadows.
   float l = dot(c, vec3(0.2126, 0.7152, 0.0722));
   c = mix(vec3(l), c, 1.22);
-  c *= mix(vec3(0.97, 0.98, 1.04), vec3(1.05, 1.0, 0.93), smoothstep(0.05, 0.8, l));
+  c *= mix(vec3(0.96, 0.95, 1.05), vec3(1.08, 0.99, 0.88), smoothstep(0.05, 0.8, l));
   float v = smoothstep(0.9, 0.3, length((vUv - 0.5) * vec2(1.2, 1.0)));
   c *= mix(0.8, 1.0, v);
   gl_FragColor = vec4(toSrgb(clamp(c, 0.0, 1.0)), 1.0);
@@ -76,7 +76,7 @@ export function createPostFx(renderer) {
     scene: { value: sceneRT.texture },
     bloomNear: { value: halfA.texture },
     bloomWide: { value: quarterB.texture },
-    strength: { value: 0.55 },
+    strength: { value: 0.7 },
     exposure: { value: 1.0 },
   });
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), composite);

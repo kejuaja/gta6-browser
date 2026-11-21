@@ -63,6 +63,22 @@ function roadTexture(rng) {
 
 // ---------------------------------------------------------------- pieces
 
+/** The sun hangs low over the ocean in the west: long shadows and a golden sky. */
+const SUN_DIR = new THREE.Vector3(-0.92, 0.13, 0.22).normalize();
+
+/** A soft round glow (white centre fading out), for pools of light on the ground. */
+function glowTexture() {
+  return canvasTexture(64, 64, (g) => {
+    const grad = g.createRadialGradient(32, 32, 1, 32, 32, 32);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(0.45, 'rgba(255,255,255,0.45)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.clearRect(0, 0, 64, 64);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+  });
+}
+
 function skyMaterial() {
   return new THREE.ShaderMaterial({
     side: THREE.BackSide,
@@ -70,17 +86,20 @@ function skyMaterial() {
     fog: false,
     uniforms: {
       top: { value: new THREE.Color(PALETTE.skyTop) },
+      mid: { value: new THREE.Color(PALETTE.skyMid) },
       horizon: { value: new THREE.Color(PALETTE.skyHorizon) },
-      sunDir: { value: new THREE.Vector3(-0.75, 0.32, 0.25).normalize() },
+      sunDir: { value: SUN_DIR },
     },
     vertexShader: `varying vec3 vDir; void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
-    fragmentShader: `uniform vec3 top; uniform vec3 horizon; uniform vec3 sunDir; varying vec3 vDir;
+    fragmentShader: `uniform vec3 top; uniform vec3 mid; uniform vec3 horizon; uniform vec3 sunDir; varying vec3 vDir;
       void main(){
         float h = clamp(vDir.y, -0.1, 1.0);
-        vec3 c = mix(horizon, top, pow(max(h, 0.0), 0.55));
+        // Sunset bands: yellow at the horizon, orange above it, rose-violet only high overhead.
+        vec3 c = mix(horizon, mid, smoothstep(0.0, 0.22, h));
+        c = mix(c, top, smoothstep(0.22, 0.95, h));
         float s = max(dot(normalize(vDir), sunDir), 0.0);
-        c += vec3(1.0, 0.62, 0.32) * pow(s, 7.0) * 0.7 + vec3(1.0, 0.92, 0.8) * pow(s, 1200.0) * 6.0;
-        if (vDir.y < 0.0) c = mix(c, vec3(0.62, 0.42, 0.28), clamp(-vDir.y * 5.0, 0.0, 1.0));
+        c += vec3(1.0, 0.55, 0.2) * pow(s, 4.0) * 0.75 + vec3(1.0, 0.85, 0.45) * pow(s, 60.0) * 1.3 + vec3(1.0, 0.95, 0.75) * pow(s, 900.0) * 8.0;
+        if (vDir.y < 0.0) c = mix(c, vec3(0.75, 0.38, 0.2), clamp(-vDir.y * 5.0, 0.0, 1.0));
         gl_FragColor = vec4(c, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
@@ -110,9 +129,9 @@ function makeEnvironment(scene, renderer) {
 }
 
 function makeLights(scene) {
-  const hemi = new THREE.HemisphereLight(0xcfe2ff, 0xe8b88a, 0.9);
+  const hemi = new THREE.HemisphereLight(0xffb98a, 0x5c3f63, 0.8);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffd29a, 3.4);
+  const sun = new THREE.DirectionalLight(PALETTE.sun, 3.1);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);
   const cam = sun.shadow.camera;
@@ -126,7 +145,7 @@ function makeLights(scene) {
   sun.shadow.normalBias = 0.04;
   scene.add(sun);
   scene.add(sun.target);
-  return { hemi, sun, offset: new THREE.Vector3(-150, 120, 50) };
+  return { hemi, sun, offset: SUN_DIR.clone().multiplyScalar(220) };
 }
 
 function makeGround(scene, rng) {
@@ -237,16 +256,25 @@ function makeLamps(scene, city) {
   const headGeo = new THREE.BoxGeometry(0.35, 0.12, 0.6);
   headGeo.translate(0, 5.82, 1.5);
   const poles = new THREE.InstancedMesh(poleGeo, new THREE.MeshStandardMaterial({ color: 0x3a3f47, roughness: 0.5, metalness: 0.5 }), city.lamps.length);
-  const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ color: 0xfff2cc, emissive: 0xffe2a0, emissiveIntensity: 0.6 }), city.lamps.length);
+  // Lamps are on for the evening: a bright head and a warm pool of light on the street below.
+  const heads = new THREE.InstancedMesh(headGeo, new THREE.MeshStandardMaterial({ color: 0xfff2cc, emissive: 0xffd590, emissiveIntensity: 4 }), city.lamps.length);
+  const poolGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  const pools = new THREE.InstancedMesh(poolGeo, new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0xffb35c, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending, depthWrite: false }), city.lamps.length);
   const m = new THREE.Matrix4();
+  const pool = new THREE.Matrix4();
+  const scale = new THREE.Matrix4().makeScale(9, 1, 9);
   city.lamps.forEach((lamp, n) => {
     m.makeRotationY(lamp.ry);
     m.setPosition(lamp.x, 0.2, lamp.z);
     poles.setMatrixAt(n, m);
     heads.setMatrixAt(n, m);
+    pool.makeRotationY(lamp.ry).multiply(scale);
+    pool.setPosition(lamp.x + Math.sin(lamp.ry) * 2, 0.24, lamp.z + Math.cos(lamp.ry) * 2);
+    pools.setMatrixAt(n, pool);
   });
   poles.castShadow = true;
-  scene.add(poles, heads);
+  pools.renderOrder = 2;
+  scene.add(poles, heads, pools);
 }
 
 function makeBeach(scene, rng) {
@@ -322,8 +350,10 @@ function makePier(scene) {
   const wheel = new THREE.Group();
   wheel.position.set(-130, 21, 300);
   const white = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.4, metalness: 0.3 });
+  // The rims are strung with bulbs: lit for the evening.
+  const bulbs = new THREE.MeshStandardMaterial({ color: 0xfff0c0, emissive: 0xffc86a, emissiveIntensity: 3 });
   for (const off of [-1.4, 1.4]) {
-    const ring = new THREE.Mesh(new THREE.TorusGeometry(18, 0.35, 6, 48), white);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(18, 0.35, 6, 48), bulbs);
     ring.rotation.y = Math.PI / 2;
     ring.position.x = off;
     wheel.add(ring);
@@ -335,7 +365,8 @@ function makePier(scene) {
     const spoke = new THREE.Mesh(new THREE.BoxGeometry(0.15, 36, 0.15), white);
     spoke.rotation.x = a;
     wheel.add(spoke);
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.8, 1.8), new THREE.MeshStandardMaterial({ color: cabinColors[n % cabinColors.length] }));
+    const color = cabinColors[n % cabinColors.length];
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.8, 1.8), new THREE.MeshStandardMaterial({ color, emissive: color, emissiveIntensity: 0.5 }));
     cabin.position.set(0, Math.cos(a) * 18, Math.sin(a) * 18);
     wheel.add(cabin);
     cabins.push(cabin);

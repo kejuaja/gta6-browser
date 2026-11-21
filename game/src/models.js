@@ -360,7 +360,14 @@ export function makeCarMesh(modelId, color) {
   part(G.trim, black, 0, 0, 0, root);
   part(G.seams, mat(0x0d0d0d, { rough: 0.8 }), 0, 0, 0, root, false);
   part(G.heads, mat(0xfff8e0, { emissive: 0xfff0c8, glow: 2.4 }), 0, 0, 0, root, false);
-  part(G.tails, mat(0xff2020, { emissive: 0xff1010, glow: 2.2 }), 0, 0, 0, root, false);
+  part(G.tails, mat(0xff2020, { emissive: 0xff1010, glow: 3 }), 0, 0, 0, root, false);
+  // Headlights on: a warm pool of light thrown on the road ahead (hidden once the car is wrecked).
+  const beam = new THREE.Mesh(beamGeometry(), beamMaterial());
+  beam.position.set(0, 0.07, spec.len / 2 + 3.6);
+  beam.scale.set(spec.wid * 1.6, 1, 7.5);
+  beam.userData.glow = true;
+  beam.renderOrder = 2;
+  root.add(beam);
   if (G.bed) part(G.bed, black, 0, 0, 0, root, false);
   if (G.spoiler) part(G.spoiler, black, 0, 0, 0, root);
   const tireMat = mat(0x121212, { rough: 0.92 });
@@ -402,6 +409,31 @@ export function makeCarMesh(modelId, color) {
   return { root, body, wheels, sirens, paint, spec, geo: G };
 }
 
+let beamGeo = null;
+let beamMat = null;
+function beamGeometry() {
+  if (!beamGeo) beamGeo = new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2);
+  return beamGeo;
+}
+/** One shared additive glow for every car's headlight pool. */
+function beamMaterial() {
+  if (!beamMat) {
+    const c = document.createElement('canvas');
+    c.width = c.height = 64;
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(32, 40, 2, 32, 40, 34);
+    grad.addColorStop(0, 'rgba(255,255,255,0.9)');
+    grad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+    const tex = new THREE.CanvasTexture(c);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    beamMat = new THREE.MeshBasicMaterial({ map: tex, color: 0xffe2b0, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+  }
+  return beamMat;
+}
+
 /** Gives one car its own paint of `color` (the shared material stays as it was for every other car). */
 export function repaintCar(mesh, color) {
   const old = mesh.paint;
@@ -410,13 +442,21 @@ export function repaintCar(mesh, color) {
   mesh.root.traverse((o) => {
     if (o.isMesh && o.material === old) o.material = fresh;
   });
+  if (mesh.ownPaint) old.dispose();
   mesh.paint = fresh;
+  mesh.ownPaint = true;
+}
+
+/** Frees what belongs to this car alone (its own paint); the shared geometry and materials stay. */
+export function disposeCarMesh(mesh) {
+  if (mesh.ownPaint) mesh.paint.dispose();
 }
 
 /** Darkens a wrecked car: every material swapped for a burnt one. */
 export function charCarMesh(mesh) {
   const burnt = mat(0x1e1b19, { rough: 1 });
   mesh.root.traverse((o) => {
-    if (o.isMesh) o.material = burnt;
+    if (o.userData.glow) o.visible = false;
+    else if (o.isMesh) o.material = burnt;
   });
 }

@@ -46,9 +46,10 @@ export function createEffects(scene) {
   scene.add(flash);
 
   const beaconGeo = new THREE.CylinderGeometry(1, 1, 1, 24, 1, true);
+  const arrowGeo = new THREE.ConeGeometry(0.6, 1.2, 4);
   const beacons = [];
 
-  return { scene, mesh, particles, next: 0, tracers, nextTracer: 0, flash, flashLife: 0, beaconGeo, beacons, shake: 0, dummy: new THREE.Object3D(), color: new THREE.Color() };
+  return { scene, mesh, particles, next: 0, tracers, nextTracer: 0, flash, flashLife: 0, beaconGeo, arrowGeo, beacons, shake: 0, dummy: new THREE.Object3D(), color: new THREE.Color() };
 }
 
 /** Throws `count` particles of `kind` from (x, y, z), spread by `speed`. */
@@ -109,7 +110,7 @@ export function addBeacon(fx, x, z, color = 0xffd23f, radius = 2.2) {
   const mesh = new THREE.Mesh(fx.beaconGeo, material);
   mesh.scale.set(radius, 4, radius);
   mesh.position.set(x, 2, z);
-  const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.6, 1.2, 4), new THREE.MeshBasicMaterial({ color }));
+  const arrow = new THREE.Mesh(fx.arrowGeo, new THREE.MeshBasicMaterial({ color }));
   arrow.rotation.x = Math.PI;
   arrow.position.set(x, 6, z);
   fx.scene.add(mesh, arrow);
@@ -122,6 +123,7 @@ export function removeBeacon(fx, beacon) {
   if (!beacon) return;
   fx.scene.remove(beacon.mesh, beacon.arrow);
   beacon.mesh.material.dispose();
+  beacon.arrow.material.dispose();
   const i = fx.beacons.indexOf(beacon);
   if (i >= 0) fx.beacons.splice(i, 1);
 }

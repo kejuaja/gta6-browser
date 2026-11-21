@@ -15,6 +15,7 @@ export const UPGRADES = [
   { id: 'tyres', name: 'Tyres', blurb: 'Wider, stickier rubber: tighter corners, fewer spins.', prices: [400, 1000], levels: ['Sport tyres', 'Slick racing tyres'] },
 ];
 
+const PIPE = new THREE.CylinderGeometry(0.07, 0.07, 0.3, 10).rotateX(Math.PI / 2);
 const ENGINE_TOP = [1, 1.08, 1.16, 1.26];
 const ENGINE_ACCEL = [1, 1.15, 1.3, 1.5];
 const ARMOUR_DAMAGE = [1, 0.75, 0.55, 0.4];
@@ -60,7 +61,7 @@ function buildMods(v) {
   }
   if (u.engine >= 2) {
     for (const sx of [-0.28, 0.28]) {
-      const pipe = put(new THREE.CylinderGeometry(0.07, 0.07, 0.3, 10).rotateX(Math.PI / 2), chrome, sx, 0.34, -L - 0.1);
+      const pipe = put(PIPE, chrome, sx, 0.34, -L - 0.1);
       pipe.castShadow = false;
     }
   }

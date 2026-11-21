@@ -26,9 +26,13 @@ const RESPAWNING = [
   { kind: 'armor', x: 482, z: 150, amount: 50 },
 ];
 
+let discGeo = null;
+let haloGeo = null;
+
 function tokenMesh() {
   const g = new THREE.Group();
-  const disc = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.1, 16), mat(0xffc93c, { emissive: 0xffa000, glow: 1.2, metal: 0.6, rough: 0.3 }));
+  discGeo = discGeo ?? new THREE.CylinderGeometry(0.45, 0.45, 0.1, 16);
+  const disc = new THREE.Mesh(discGeo, mat(0xffc93c, { emissive: 0xffa000, glow: 1.2, metal: 0.6, rough: 0.3 }));
   disc.rotation.x = Math.PI / 2;
   g.add(disc);
   for (let n = 0; n < 8; n += 1) {
@@ -58,7 +62,8 @@ function pickupMesh(p) {
     const grip = new THREE.Mesh(box(0.09, 0.25, 0.12), dark);
     grip.position.set(0, -0.18, -len * 0.25);
     g.add(grip);
-    const halo = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.04, 6, 24), mat(0xff9f1c, { emissive: 0xff8000, glow: 1.4 }));
+    haloGeo = haloGeo ?? new THREE.TorusGeometry(0.6, 0.04, 6, 24);
+    const halo = new THREE.Mesh(haloGeo, mat(0xff9f1c, { emissive: 0xff8000, glow: 1.4 }));
     g.add(halo);
   }
   return g;

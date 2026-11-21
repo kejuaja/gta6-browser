@@ -58,7 +58,7 @@ export function createGame(canvas, uiRoot, seed) {
     vehicles: [],
     pickups: [],
     time: 0,
-    clock: 17 * 60 + 20,
+    clock: 18 * 60 + 35,
     mode: 'title',
     stats: freshStats(),
     progress: { tokens: [] },
@@ -324,7 +324,8 @@ export function stepGame(game, dt, input) {
   }
   updateEffects(game.fx, dt);
   game.time += dt;
-  game.clock += dt;
+  // Golden hour lasts: the clock creeps (six game minutes a real minute) so the sky stays true to it.
+  game.clock += dt * 0.1;
 }
 
 /** Per-frame work after the steps: camera, the city's moving parts, HUD and sound. */

@@ -39,10 +39,12 @@ export const DISTRICTS = {
 };
 
 export const PALETTE = {
-  skyTop: 0x1f5bc4,
-  skyHorizon: 0xff9a5a,
-  sun: 0xfff0d2,
-  fog: 0xeda983,
+  // Sunset: a yellow horizon burning to orange, a rose-violet zenith, warm haze.
+  skyTop: 0x6a3a86,
+  skyMid: 0xff7433,
+  skyHorizon: 0xffc247,
+  sun: 0xff9445,
+  fog: 0xf0965a,
   asphalt: '#3b3d44',
   asphaltLight: '#45474f',
   sidewalk: 0xd9cfc0,

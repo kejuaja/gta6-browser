@@ -25,6 +25,36 @@ function facadeTexture() {
   });
 }
 
+/**
+ * What glows at dusk on each texture: the window panes lit warm, the walls dark. Same layout as the
+ * matching colour texture, so the light sits exactly in the glass.
+ */
+function litWindows(draw) {
+  return canvasTexture(64, 64, (g) => {
+    g.fillStyle = '#000';
+    g.fillRect(0, 0, 64, 64);
+    draw(g);
+  });
+}
+const facadeLit = () => litWindows((g) => {
+  g.fillStyle = '#ffc77a';
+  g.fillRect(13, 16, 16, 31);
+  g.fillStyle = '#ffd9a0';
+  g.fillRect(34, 16, 17, 31);
+});
+const ribbonLit = () => litWindows((g) => {
+  g.fillStyle = '#ffcf85';
+  g.fillRect(0, 20, 30, 23);
+  g.fillStyle = '#ffe1aa';
+  g.fillRect(34, 20, 30, 23);
+});
+const glassLit = () => litWindows((g) => {
+  g.fillStyle = 'rgba(255, 205, 140, 0.75)';
+  g.fillRect(4, 8, 57, 22);
+  g.fillStyle = 'rgba(255, 220, 170, 0.45)';
+  g.fillRect(4, 36, 57, 22);
+});
+
 /** Art-deco ribbon windows: one long band per floor with a pale spandrel. */
 function ribbonTexture() {
   return canvasTexture(64, 64, (g) => {
@@ -375,9 +405,10 @@ export function buildBuildings(scene, city, rng) {
     mesh.receiveShadow = true;
     scene.add(mesh);
   };
-  add(B.facade, new THREE.MeshStandardMaterial({ map: facadeTexture(), vertexColors: true, roughness: 0.8 }));
-  add(B.deco, new THREE.MeshStandardMaterial({ map: ribbonTexture(), vertexColors: true, roughness: 0.6 }));
-  add(B.glass, new THREE.MeshStandardMaterial({ map: glassTexture(), vertexColors: true, roughness: 0.12, metalness: 0.6 }));
+  // Evening: every window is lit from inside (emissive maps that match the window layouts).
+  add(B.facade, new THREE.MeshStandardMaterial({ map: facadeTexture(), vertexColors: true, roughness: 0.8, emissive: 0xffffff, emissiveMap: facadeLit(), emissiveIntensity: 1.1 }));
+  add(B.deco, new THREE.MeshStandardMaterial({ map: ribbonTexture(), vertexColors: true, roughness: 0.6, emissive: 0xffffff, emissiveMap: ribbonLit(), emissiveIntensity: 1.1 }));
+  add(B.glass, new THREE.MeshStandardMaterial({ map: glassTexture(), vertexColors: true, roughness: 0.12, metalness: 0.6, emissive: 0xffffff, emissiveMap: glassLit(), emissiveIntensity: 0.9 }));
   add(B.ribbed, new THREE.MeshStandardMaterial({ map: ribbedTexture(), vertexColors: true, roughness: 0.6, metalness: 0.2 }));
   add(B.plain, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.75 }));
   const neon = new THREE.MeshBasicMaterial({ vertexColors: true });

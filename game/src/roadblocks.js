@@ -38,8 +38,10 @@ function barrier(scene, x, z, yaw) {
   return g;
 }
 
+let coneGeo = null;
 function cone(scene, x, z) {
-  const m = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.7, 10), mat(0xff6a00, { rough: 0.5 }));
+  coneGeo = coneGeo ?? new THREE.ConeGeometry(0.22, 0.7, 10);
+  const m = new THREE.Mesh(coneGeo, mat(0xff6a00, { rough: 0.5 }));
   m.position.set(x, 0.35, z);
   m.castShadow = true;
   scene.add(m);

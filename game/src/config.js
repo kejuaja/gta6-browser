@@ -75,9 +75,21 @@ export const CAR_MODELS = {
   duna: { name: 'Duna Pickup', len: 5.2, wid: 2.1, hgt: 1.6, cabin: 0.32, pickup: true, top: 24, accel: 8, grip: 6, colors: [0x8d6e63, 0x546e7a, 0xc62828, 0xeeeeee] },
   cab: { name: 'Bayline Cab', len: 4.6, wid: 1.95, hgt: 1.4, cabin: 0.5, top: 26, accel: 9, grip: 7, taxi: true, colors: [0xffc107] },
   cruiser: { name: 'PBPD Cruiser', len: 4.8, wid: 2.0, hgt: 1.4, cabin: 0.48, top: 35, accel: 13, grip: 8, police: true, colors: [0xf4f4f4] },
+  suv: { name: 'Marlin SUV', len: 4.8, wid: 2.05, hgt: 1.85, cabin: 0.5, top: 30, accel: 11, grip: 6.8, health: 1250, colors: [0x2b2d33, 0xf2f2f2, 0x6b8e23, 0x8b1e2d, 0x2f5f8a, 0xc9a66b] },
+  van: { name: 'Bayside Van', len: 5.3, wid: 2.1, hgt: 2.25, cabin: 0.55, top: 25, accel: 8, grip: 6, health: 1200, colors: [0xf5f5f5, 0x3a78c2, 0xe0b400, 0xd9534f, 0x5b8c5a] },
+  bus: { name: 'Palm Transit Bus', len: 11, wid: 2.5, hgt: 3.1, cabin: 0.6, top: 20, accel: 5, grip: 5.5, health: 1800, noGarage: true, decal: ['PALM TRANSIT', '#ff7a2f', '#ffffff'], colors: [0xff8a3d, 0x1e88e5] },
+  psuv: { name: 'PBPD Interceptor', len: 4.8, wid: 2.05, hgt: 1.85, cabin: 0.5, top: 37, accel: 14, grip: 7.6, police: true, health: 1700, colors: [0x15171c] },
+  ptruck: { name: 'PBPD Riot Truck', len: 6.2, wid: 2.4, hgt: 2.6, cabin: 0.55, top: 29, accel: 10, grip: 6.5, police: true, health: 2600, colors: [0x1d2a44] },
 };
 
-export const TRAFFIC_MODELS = ['sorrel', 'sorrel', 'tarpon', 'duna', 'cab', 'kestrel', 'sorrel', 'tarpon'];
+export const TRAFFIC_MODELS = ['sorrel', 'sorrel', 'tarpon', 'duna', 'cab', 'kestrel', 'sorrel', 'tarpon', 'suv', 'suv', 'van', 'van', 'bus'];
+
+/** Which police vehicle answers a call: the Interceptor SUV joins at three stars, the Riot Truck at four. */
+export function policeModelFor(level, roll) {
+  if (level >= 4 && roll < 0.35) return 'ptruck';
+  if (level >= 3 && roll < 0.7) return 'psuv';
+  return 'cruiser';
+}
 
 export const WEAPONS = {
   fists: { id: 'fists', name: 'Fists', damage: 14, rate: 0.42, range: 1.7, melee: true },

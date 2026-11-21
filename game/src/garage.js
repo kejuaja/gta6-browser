@@ -13,6 +13,14 @@ export const UPGRADES = [
   { id: 'engine', name: 'Engine', blurb: 'Turbo, intake and exhaust: more top speed and pick-up.', prices: [600, 1400, 2800], levels: ['Street tune', 'Turbo kit', 'Race engine'] },
   { id: 'armour', name: 'Armour', blurb: 'Steel under the paint: the car shrugs off crashes and bullets.', prices: [500, 1200, 2500], levels: ['Bull bar', 'Side plating', 'Full cage'] },
   { id: 'tyres', name: 'Tyres', blurb: 'Wider, stickier rubber: tighter corners, fewer spins.', prices: [400, 1000], levels: ['Sport tyres', 'Slick racing tyres'] },
+  {
+    id: 'kit',
+    name: 'Body kit',
+    only: ['suv', 'van'],
+    blurb: 'SUV: roof rack, light bar, snorkel and a spare wheel. Van: roof rack, ladder, racing stripes and neon underglow.',
+    prices: [700, 1600],
+    levels: ['Roof rack and lights', 'Street pack'],
+  },
 ];
 
 const PIPE = new THREE.CylinderGeometry(0.07, 0.07, 0.3, 10).rotateX(Math.PI / 2);
@@ -31,7 +39,7 @@ export function garageBay(game) {
 function tunedSpec(v) {
   const base = CAR_MODELS[v.model];
   const u = v.upgrades;
-  return { ...base, top: base.top * ENGINE_TOP[u.engine], accel: base.accel * ENGINE_ACCEL[u.engine], grip: base.grip * TYRE_GRIP[u.tyres] };
+  return { ...base, top: base.top * ENGINE_TOP[u.engine], accel: base.accel * ENGINE_ACCEL[u.engine], grip: base.grip * TYRE_GRIP[u.tyres], health: base.health };
 }
 
 /** The visible parts of each upgrade, rebuilt on the car whenever its levels change. */
@@ -83,6 +91,7 @@ function buildMods(v) {
     for (const sx of [-1, 1]) put(box(0.06, 0.06, 1.3), steel, sx * s.wid * 0.36, roofY + 0.1, (mesh.geo.frontTop + mesh.geo.rearTop) / 2);
     for (const z of [-0.45, 0, 0.45]) put(box(s.wid * 0.74, 0.05, 0.05), steel, 0, roofY + 0.12, (mesh.geo.frontTop + mesh.geo.rearTop) / 2 + z);
   }
+  if (u.kit >= 1) bodyKit(v, put, u.kit);
   const rim = u.tyres >= 1 ? mat(0xffc93c, { metal: 1, rough: 0.2 }) : mat(0xd8d8d8, { metal: 0.95, rough: 0.22 });
   for (const w of mesh.wheels) {
     w.wheel.children[1].material = rim;
@@ -90,9 +99,45 @@ function buildMods(v) {
   }
 }
 
+/** The SUV's and the van's body kits: what each level bolts on. */
+function bodyKit(v, put, level) {
+  const s = v.spec;
+  const geo = v.mesh.geo;
+  const b = geo.b;
+  const roofY = geo.roofY;
+  const L = s.len / 2;
+  const midZ = (geo.frontTop + geo.rearTop) / 2;
+  const roofLen = Math.abs(geo.frontTop - geo.rearTop) * 0.8;
+  const black = mat(0x1a1a1a, { rough: 0.5, metal: 0.4 });
+  const lamp = mat(0xfff6d8, { emissive: 0xfff0c0, glow: 3 });
+  // Level 1 on both: a roof rack.
+  for (const sx of [-1, 1]) put(box(0.06, 0.06, roofLen), black, sx * s.wid * 0.36, roofY + 0.16, midZ);
+  for (const z of [-0.4, 0, 0.4]) put(box(s.wid * 0.74, 0.05, 0.06), black, 0, roofY + 0.16, midZ + z * roofLen);
+  if (v.model === 'suv') {
+    put(box(s.wid * 0.7, 0.16, 0.14), black, 0, roofY + 0.26, midZ + roofLen / 2);
+    for (const x of [-0.45, -0.15, 0.15, 0.45]) put(box(0.22, 0.13, 0.05), lamp, x * s.wid * 0.7 * 1.2, roofY + 0.26, midZ + roofLen / 2 + 0.08);
+    if (level >= 2) {
+      put(box(0.14, 0.9, 0.14), black, s.wid / 2 - 0.05, b.belt + 0.35, b.cowl - 0.15);
+      put(geo.tire, black, 0, 0.95, -L - 0.2).rotation.y = Math.PI / 2;
+      for (const sx of [-1, 1]) put(box(0.12, 0.1, Math.abs(b.front - b.back) - 1.0), mat(0x333333, { metal: 0.7, rough: 0.3 }), sx * (s.wid / 2 + 0.08), 0.42, (b.front + b.back) / 2);
+    }
+  } else {
+    put(box(0.06, roofY - 0.4, 0.06), black, -s.wid * 0.3, (roofY + 0.4) / 2, -L - 0.06);
+    put(box(0.06, roofY - 0.4, 0.06), black, -s.wid * 0.1, (roofY + 0.4) / 2, -L - 0.06);
+    for (let y = 0.6; y < roofY; y += 0.3) put(box(s.wid * 0.2, 0.04, 0.04), black, -s.wid * 0.2, y, -L - 0.06);
+    if (level >= 2) {
+      const stripe = mat(0xff3fa4, { rough: 0.4 });
+      for (const sx of [-1, 1]) put(box(0.02, 0.12, s.len * 0.8), stripe, sx * (s.wid / 2 + 0.02), b.belt - 0.35, 0);
+      // Neon underglow: lit, so the street around the van glows pink.
+      const glow = put(box(s.wid * 0.9, 0.04, s.len * 0.85), mat(0xff3fa4, { emissive: 0xff2a9a, glow: 4 }), 0, 0.12, 0);
+      glow.castShadow = false;
+    }
+  }
+}
+
 /** Puts levels `u` on car `v`: its stats, its armour and the parts that show them. */
 export function applyUpgrades(v, u) {
-  v.upgrades = { engine: 0, armour: 0, tyres: 0, ...u };
+  v.upgrades = { engine: 0, armour: 0, tyres: 0, kit: 0, ...u };
   v.spec = tunedSpec(v);
   v.armourMul = ARMOUR_DAMAGE[v.upgrades.armour];
   buildMods(v);
@@ -107,6 +152,8 @@ export function canUpgrade(game, item) {
   const v = game.player.vehicle;
   if (!v) return { ok: false, reason: 'No car', price: 0 };
   if (v.spec.police) return { ok: false, reason: 'Dex won\'t touch a cop car', price: 0 };
+  if (v.spec.noGarage) return { ok: false, reason: 'Too big for the bay', price: 0 };
+  if (item.only && !item.only.includes(v.model)) return { ok: false, reason: 'SUV and van only', price: 0 };
   const level = upgradeLevel(v, item.id);
   if (level >= item.prices.length) return { ok: false, reason: 'Maxed', price: 0 };
   const price = item.prices[level];

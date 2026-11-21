@@ -84,7 +84,8 @@ export function placeRoadblock(game, at) {
   for (const side of [-1, 1]) {
     const x = at.x + cx * side * 3.1;
     const z = at.z + cz * side * 3.1;
-    const v = createVehicle(game, 'cruiser', x, z, across + side * 0.32);
+    const model = side > 0 && game.wanted.level >= 4 ? 'ptruck' : side > 0 && game.wanted.level >= 3 ? 'psuv' : 'cruiser';
+    const v = createVehicle(game, model, x, z, across + side * 0.32);
     v.ai = 'parked';
     v.siren = true;
     v.deployed = true;

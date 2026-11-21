@@ -1,7 +1,7 @@
 // The wanted level and the police: crimes add heat (witnessed or not), heat sets the stars, the
 // stars set how many units are dispatched. Cruisers chase along the road grid and ram, crews get
 // out and arrest (one star) or shoot (two and up), and staying out of sight long enough loses them.
-import { GRID, WANTED_THRESHOLDS, POLICE_UNITS, CRIMES, DENSITY, COP_SIGHT, PATROLS } from './config.js';
+import { GRID, WANTED_THRESHOLDS, POLICE_UNITS, CRIMES, DENSITY, COP_SIGHT, PATROLS, policeModelFor } from './config.js';
 import { spawnTrafficCar } from './traffic.js';
 import { lanePoint, nodePos } from './citymap.js';
 import { createVehicle, driveVehicle, exitPoint, removeVehicle } from './vehicles.js';
@@ -117,12 +117,14 @@ export function spawnPoliceUnit(game, x = null, z = null) {
     if (route[2] === k) route[3] = l < N ? l + 1 : l - 1;
     const pt = lanePoint(route[0], route[1], route[2], route[3], 0.3);
     if (x === null && Math.hypot(pt.x - p.x, pt.z - p.z) < 70) continue;
-    const v = createVehicle(game, 'cruiser', pt.x, pt.z, pt.yaw);
+    const model = policeModelFor(game.wanted.level, rng.next());
+    const v = createVehicle(game, model, pt.x, pt.z, pt.yaw);
     v.ai = 'police';
     v.siren = true;
     v.vx = Math.sin(pt.yaw) * 12;
     v.vz = Math.cos(pt.yaw) * 12;
-    v.crew = [makeCop(game, pt.x, pt.z, pt.yaw), makeCop(game, pt.x, pt.z, pt.yaw)];
+    v.crew = [];
+    for (let n = 0; n < (model === 'ptruck' ? 4 : 2); n += 1) v.crew.push(makeCop(game, pt.x, pt.z, pt.yaw));
     for (const c of v.crew) {
       c.vehicle = v;
       c.mesh.root.visible = false;

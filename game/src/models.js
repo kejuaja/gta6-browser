@@ -204,7 +204,20 @@ const BODIES = {
   duna: { belt: 1.02, cowl: 1.05, deck: -0.3, ws: 0.5, rear: 0.06, wheel: 0.42, front: 1.7, back: -1.65, nose: 0.12, bed: true },
   cab: { belt: 0.88, cowl: 0.8, deck: -1.3, ws: 0.72, rear: 0.5, wheel: 0.35, front: 1.45, back: -1.45, nose: 0.2 },
   cruiser: { belt: 0.88, cowl: 0.85, deck: -1.35, ws: 0.75, rear: 0.55, wheel: 0.36, front: 1.5, back: -1.5, nose: 0.2 },
+  suv: { belt: 1.12, cowl: 1.1, deck: -1.85, ws: 0.55, rear: 0.15, wheel: 0.44, front: 1.55, back: -1.5, nose: 0.18 },
+  van: { belt: 1.15, cowl: 1.6, deck: -2.4, ws: 0.45, rear: 0.05, wheel: 0.38, front: 1.85, back: -1.75, nose: 0.3 },
+  bus: { belt: 1.35, cowl: 4.7, deck: -5.2, ws: 0.15, rear: 0.05, wheel: 0.5, front: 3.8, back: -3.4, nose: 0.25 },
+  psuv: { belt: 1.12, cowl: 1.1, deck: -1.85, ws: 0.55, rear: 0.15, wheel: 0.44, front: 1.55, back: -1.5, nose: 0.18 },
+  ptruck: { belt: 1.35, cowl: 1.9, deck: -2.9, ws: 0.4, rear: 0.05, wheel: 0.55, front: 2.0, back: -2.0, nose: 0.2 },
 };
+
+const decalPlanes = new Map();
+/** A decal-sized plane, one per size, shared by every car that wears it. */
+function decalPlane(w, h) {
+  const key = `${w}x${h}`;
+  if (!decalPlanes.has(key)) decalPlanes.set(key, new THREE.PlaneGeometry(w, h));
+  return decalPlanes.get(key);
+}
 
 /** The body's side profile: bumpers, wheel arches, the bonnet's slope, the boot. */
 function bodyShape(spec, b) {
@@ -389,7 +402,7 @@ export function makeCarMesh(modelId, color) {
   if (spec.police) {
     const side = decalMaterial('POLICE', '#0d1b3e', '#ffffff');
     for (const sx of [-1, 1]) {
-      const d = part(new THREE.PlaneGeometry(1.7, 0.36), side, sx * (spec.wid / 2 + 0.005), b.belt - 0.26, midZ + 0.1, root, false);
+      const d = part(decalPlane(1.7, 0.36), side, sx * (spec.wid / 2 + 0.005), b.belt - 0.26, midZ + 0.1, root, false);
       d.rotation.y = sx * Math.PI / 2;
     }
     part(box(spec.wid * 0.7, 0.08, 0.32), black, 0, roofY + 0.06, midZ, root);
@@ -402,7 +415,15 @@ export function makeCarMesh(modelId, color) {
     part(box(0.72, 0.2, 0.3), mat(0xffffff, { emissive: 0xfff3a0, glow: 1.2 }), 0, roofY + 0.12, midZ, root);
     const side = decalMaterial('BAYLINE CAB', '#111111', '#ffc107');
     for (const sx of [-1, 1]) {
-      const d = part(new THREE.PlaneGeometry(1.5, 0.28), side, sx * (spec.wid / 2 + 0.005), b.belt - 0.24, midZ, root, false);
+      const d = part(decalPlane(1.5, 0.28), side, sx * (spec.wid / 2 + 0.005), b.belt - 0.24, midZ, root, false);
+      d.rotation.y = sx * Math.PI / 2;
+    }
+  }
+  if (spec.decal) {
+    // The bus line's name along both flanks, below the windows.
+    const side = decalMaterial(...spec.decal);
+    for (const sx of [-1, 1]) {
+      const d = part(decalPlane(4.2, 0.5), side, sx * (spec.wid / 2 + 0.005), b.belt - 0.38, 0, root, false);
       d.rotation.y = sx * Math.PI / 2;
     }
   }
@@ -421,7 +442,7 @@ function beamMaterial() {
     const c = document.createElement('canvas');
     c.width = c.height = 64;
     const g = c.getContext('2d');
-    const grad = g.createRadialGradient(32, 40, 2, 32, 40, 34);
+    const grad = g.createRadialGradient(32, 32, 2, 32, 32, 31);
     grad.addColorStop(0, 'rgba(255,255,255,0.9)');
     grad.addColorStop(0.5, 'rgba(255,255,255,0.35)');
     grad.addColorStop(1, 'rgba(255,255,255,0)');
@@ -429,7 +450,7 @@ function beamMaterial() {
     g.fillRect(0, 0, 64, 64);
     const tex = new THREE.CanvasTexture(c);
     tex.colorSpace = THREE.SRGBColorSpace;
-    beamMat = new THREE.MeshBasicMaterial({ map: tex, color: 0xffe2b0, transparent: true, opacity: 0.55, blending: THREE.AdditiveBlending, depthWrite: false });
+    beamMat = new THREE.MeshBasicMaterial({ map: tex, color: 0xffe2b0, transparent: true, opacity: 0.38, blending: THREE.AdditiveBlending, depthWrite: false });
   }
   return beamMat;
 }

@@ -31,7 +31,7 @@ export function createVehicle(game, model, x, z, yaw, color = null) {
     fwd: 0,
     lat: 0,
     steer: 0,
-    health: spec.police ? 1300 : 1000,
+    health: spec.health ?? (spec.police ? 1300 : 1000),
     wrecked: false,
     burn: 0,
     driver: null,
@@ -130,7 +130,7 @@ export function driveVehicle(game, v, ctl, dt) {
   v.braking = ctl.brake > 0 && vF > 0.5;
 
   // Buildings: a circle at the front and one at the rear, each pushed out and bounced.
-  for (const end of [0.28, -0.28]) {
+  for (const end of probes(spec)) {
     probe.x = v.x + fx * spec.len * end;
     probe.z = v.z + fz * spec.len * end;
     const ox = probe.x;
@@ -191,6 +191,11 @@ function runOverPeople(game, v) {
   }
 }
 
+/** Where along its length a body is tested for hits: two circles, four for a bus or a truck. */
+function probes(spec) {
+  return spec.len > 6 ? [0.4, 0.14, -0.14, -0.4] : [0.28, -0.28];
+}
+
 /** Pushes overlapping cars apart and trades their momentum along the hit. */
 export function collideVehicles(game) {
   const list = game.vehicles;
@@ -200,9 +205,10 @@ export function collideVehicles(game) {
       const q = list[b];
       const dx0 = q.x - p.x;
       const dz0 = q.z - p.z;
-      if (dx0 * dx0 + dz0 * dz0 > 49) continue;
-      for (const ea of [0.28, -0.28]) {
-        for (const eb of [0.28, -0.28]) {
+      const reach = (p.spec.len + q.spec.len) / 2 + 2;
+      if (dx0 * dx0 + dz0 * dz0 > Math.max(49, reach * reach)) continue;
+      for (const ea of probes(p.spec)) {
+        for (const eb of probes(q.spec)) {
           const ax = p.x + Math.sin(p.yaw) * p.spec.len * ea;
           const az = p.z + Math.cos(p.yaw) * p.spec.len * ea;
           const bx = q.x + Math.sin(q.yaw) * q.spec.len * eb;

@@ -190,6 +190,7 @@ export function createMenus(root, handlers) {
     garageCar.textContent = v ? `"Let's see what this ${v.spec.name} can do." Dex fixed the dents for free.` : '';
     garageList.innerHTML = '';
     for (const item of handlers.garageItems) {
+      if (item.only && !(v && item.only.includes(v.model))) continue;
       const check = handlers.canUpgrade(game, item);
       const level = v && v.upgrades ? v.upgrades[item.id] : 0;
       const row = el('button', `shop-item${check.ok ? '' : ' off'}`, garageList);

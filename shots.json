@@ -1,6 +1,6 @@
 [
-  { "name": "1-heat.jpg", "query": "?shot=heat&seed=1", "shows": "Mission 'Sunset Heat' at four stars: Voss's cash truck heading into a police roadblock under Air 1's searchlight, survival timer, rank, HUD and minimap" },
+  { "name": "1-heat.jpg", "query": "?shot=heat&seed=1", "shows": "Mission 'Sunset Heat' at four stars: Voss's cash truck heading into a roadblock (cruiser and Riot Truck) under Air 1's searchlight, survival timer, rank, HUD and minimap" },
   { "name": "2-race.jpg", "query": "?shot=race&seed=1", "shows": "The Sunset Boulevard Run street race: four cars on the beach road, the next checkpoint, race position and time, an upgraded Kestrel" },
   { "name": "3-garage.jpg", "query": "?shot=garage&seed=1", "shows": "Dex's Garage: engine, armour and tyre upgrades bought with cash and fitted on the car (scoop, wing, side plates, gold rims), respect earned" },
-  { "name": "4-citychase.jpg", "query": "?shot=citychase&seed=1", "shows": "Mission 'Hot Pursuit' at three stars: cruisers on the bumper and the police helicopter's beam through the Neon Strip" }
+  { "name": "4-citychase.jpg", "query": "?shot=citychase&seed=1", "shows": "Mission 'Hot Pursuit' at three stars: Interceptor SUVs on the bumper and the police helicopter's beam through the Neon Strip" }
 ]

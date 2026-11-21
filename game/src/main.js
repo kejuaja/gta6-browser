@@ -12,6 +12,7 @@ import { loadSave, saveSettings } from './save.js';
 import { stageShot } from './shots.js';
 import { createPostFx } from './postfx.js';
 import { SHOP_ITEMS, canBuy, buy } from './shop.js';
+import { UPGRADES, canUpgrade, buyUpgrade } from './garage.js';
 import { detectRenderer, createQualityGovernor } from './quality.js';
 
 const MAX_FRAME = 0.25;
@@ -121,6 +122,14 @@ const menus = createMenus(ui, {
   onCloseShop() {
     closeShop();
   },
+  garageItems: UPGRADES,
+  canUpgrade,
+  onUpgrade(item) {
+    return buyUpgrade(game, item);
+  },
+  onCloseGarage() {
+    closeGarage();
+  },
   onCreditsDone() {
     menus.hideCredits();
     game.mode = 'play';
@@ -159,6 +168,19 @@ game.openShop = () => {
   menus.showShop(game);
   announce('Bay Arms. Choose an item to buy, or Esc to leave.');
 };
+/** Dex's garage works like the shop: the world waits while you pick upgrades. */
+game.openGarage = () => {
+  if (game.mode !== 'play') return;
+  game.mode = 'garage';
+  input.unlock();
+  menus.showGarage(game);
+  announce("Dex's Garage. Choose an upgrade, or Esc to drive out.");
+};
+function closeGarage() {
+  menus.hideGarage();
+  game.mode = 'play';
+  input.lock();
+}
 function closeShop() {
   menus.hideShop();
   game.mode = 'play';
@@ -233,6 +255,7 @@ function handleKeys() {
     }
   } else if (game.mode === 'paused' && (input.pressed('Escape') || input.pressed('KeyP'))) resume();
   else if (game.mode === 'shop' && input.pressed('Escape')) closeShop();
+  else if (game.mode === 'garage' && input.pressed('Escape')) closeGarage();
 }
 
 let last = performance.now();

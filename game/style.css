@@ -141,3 +141,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-race .pos small { font-size: 22px; color: #fff; }
 .hud-race .info { font: 700 14px var(--text); line-height: 1.35; text-align: left; }
 .hud-banner.countdown .title { font-size: 120px; color: #ff8c1a; }
+.garage-screen { display: flex; align-items: center; justify-content: flex-end; padding-right: 3vw; }
+.garage-panel { width: min(470px, 44vw); border-color: #b4ff3f; box-shadow: 0 0 40px rgba(180, 255, 63, 0.3); }
+.garage-panel .shop-title { color: #b4ff3f; text-shadow: 0 0 14px rgba(180, 255, 63, 0.7); }
+.garage-panel .shop-item:hover { background: rgba(180, 255, 63, 0.15); border-color: #b4ff3f; }

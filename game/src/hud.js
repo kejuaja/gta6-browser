@@ -306,6 +306,7 @@ export function mapBlips(game) {
   out.push({ x: s.x, z: s.z, color: '#4dff88', shape: 'square', label: 'S', size: 5 });
   const paint = game.city.pois.paint;
   out.push({ x: paint.x, z: paint.z, color: '#ff5fd2', shape: 'square', label: 'P', size: 5 });
+  if (game.garageBeacon) out.push({ x: game.garageBeacon.x, z: game.garageBeacon.z, color: '#b4ff3f', shape: 'square', label: 'G', size: 5 });
   const shop = game.city.pois.shop;
   out.push({ x: shop.x, z: shop.z, color: '#3fd0ff', shape: 'square', label: '$', size: 5 });
   const flash = Math.floor(game.time * 4) % 2 === 0;

@@ -243,7 +243,8 @@ export function collideVehicles(game) {
 export function damageVehicle(game, v, amount, attacker) {
   if (v.wrecked) return;
   if (attacker) v.lastAttacker = attacker;
-  v.health -= amount;
+  // Garage armour (garage.js) soaks part of every hit.
+  v.health -= amount * (v.armourMul ?? 1);
   if (v.health <= 0 && v.burn === 0) {
     v.health = 0;
     v.burn = 4.5;

@@ -399,7 +399,7 @@ export function makeCarMesh(modelId, color) {
       d.rotation.y = sx * Math.PI / 2;
     }
   }
-  return { root, body, wheels, sirens, paint, spec };
+  return { root, body, wheels, sirens, paint, spec, geo: G };
 }
 
 /** Gives one car its own paint of `color` (the shared material stays as it was for every other car). */

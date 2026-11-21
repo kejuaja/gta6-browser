@@ -21,6 +21,7 @@ import { updateHostiles, hostileHurt } from './hostiles.js';
 import { createStory, updateStory, failMission } from './missions.js';
 import { createPickups, updatePickups, dropCash } from './pickups.js';
 import { createShop, updateShop } from './shop.js';
+import { createGarage, updateGarage } from './garage.js';
 import { createHud } from './hud.js';
 import { createAudio } from './audio.js';
 import { saveGame as storeSave, loadSettings } from './save.js';
@@ -138,6 +139,7 @@ export function clearWorld(game) {
   removeBeacon(game.fx, game.saveBeacon);
   removeBeacon(game.fx, game.paintBeacon);
   removeBeacon(game.fx, game.shopBeacon);
+  removeBeacon(game.fx, game.garageBeacon);
   clearWanted(game);
   resetHelicopter(game.heli);
   game.heli.cooldown = 0;
@@ -180,6 +182,7 @@ export function startGame(game, save = null) {
   if (save) p.health = save.health;
   createPickups(game);
   createShop(game);
+  createGarage(game, save ? save.garageCar ?? null : null);
   createRaces(game);
   // Rides waiting at the kerb by the hospital and the safehouse.
   parkCar(game, 'sorrel', 226.2, 108, Math.PI, 0x2c5e8a);
@@ -295,6 +298,7 @@ export function stepGame(game, dt, input) {
     guarded(game, updateStory, dt);
     guarded(game, updatePickups, dt);
     guarded(game, updateShop, dt);
+    guarded(game, updateGarage, dt);
     if (!p.alive) beginRespawn(game, 'dead');
   }
   if (game.mode === 'dead' || game.mode === 'busted') {

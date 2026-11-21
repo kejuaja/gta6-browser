@@ -76,7 +76,7 @@ export function createMenus(root, handlers) {
   mapCanvas.width = 620;
   mapCanvas.height = 560;
   const legend = el('div', 'legend', mapPage);
-  for (const [c, t] of [['#ffd23f', 'Mission'], ['#4dff88', 'Safehouse (save)'], ['#3fd0ff', 'Bay Arms (guns, armour)'], ['#ff5fd2', 'Paint Shack (lose cops, $100)'], ['#ff3030', 'Police']]) {
+  for (const [c, t] of [['#ffd23f', 'Mission'], ['#4dff88', 'Safehouse (save)'], ['#3fd0ff', 'Bay Arms (guns, armour)'], ['#ff5fd2', 'Paint Shack (lose cops, $100)'], ['#b4ff3f', "Dex's Garage (upgrades)"], ['#ff8c1a', 'Street race'], ['#ff3030', 'Police, Air 1'], ['#ff9f1a', 'Roadblock']]) {
     const row = el('div', 'item', legend);
     el('span', 'dot', row).style.background = c;
     el('span', '', row, t);
@@ -170,6 +170,40 @@ export function createMenus(root, handlers) {
     }
   }
 
+  // ---------------- Dex's garage: a side panel, so the car being tuned stays in view
+  const garage = el('div', 'menu garage-screen hidden', root);
+  const garagePanel = el('div', 'shop-panel garage-panel', garage);
+  const garageHead = el('div', 'shop-head', garagePanel);
+  el('div', 'shop-title', garageHead, "DEX'S GARAGE");
+  const garageCash = el('div', 'shop-cash', garageHead);
+  const garageCar = el('div', 'shop-tag', garagePanel);
+  const garageList = el('div', 'shop-list', garagePanel);
+  const garageStatus = el('div', 'shop-status', garagePanel);
+  button(garagePanel, 'Drive out (Esc)', () => handlers.onCloseGarage());
+  let garageGame = null;
+  function renderGarage() {
+    const game = garageGame;
+    const v = game.player.vehicle;
+    garageCash.textContent = `$${Math.floor(game.player.money).toLocaleString('en-US')}`;
+    garageCar.textContent = v ? `"Let's see what this ${v.spec.name} can do." Dex fixed the dents for free.` : '';
+    garageList.innerHTML = '';
+    for (const item of handlers.garageItems) {
+      const check = handlers.canUpgrade(game, item);
+      const level = v && v.upgrades ? v.upgrades[item.id] : 0;
+      const row = el('button', `shop-item${check.ok ? '' : ' off'}`, garageList);
+      row.type = 'button';
+      const left = el('div', 'info', row);
+      el('div', 'name', left, `${item.name}  ${'■'.repeat(level)}${'□'.repeat(item.prices.length - level)}`);
+      el('div', 'blurb', left, level < item.levels.length ? `Next: ${item.levels[level]}. ${item.blurb}` : `${item.levels[level - 1]}. Fully upgraded.`);
+      el('div', 'price', row, check.ok ? `$${check.price.toLocaleString('en-US')}` : check.reason);
+      row.addEventListener('click', (e) => {
+        e.stopPropagation();
+        garageStatus.textContent = handlers.onUpgrade(item);
+        renderGarage();
+      });
+    }
+  }
+
   // ---------------- fade, credits
   const fade = el('div', 'fade', root);
   const credits = el('div', 'menu credits hidden', root);
@@ -230,6 +264,15 @@ export function createMenus(root, handlers) {
     },
     hideShop() {
       shop.classList.add('hidden');
+    },
+    showGarage(game) {
+      garageGame = game;
+      garageStatus.textContent = '';
+      renderGarage();
+      garage.classList.remove('hidden');
+    },
+    hideGarage() {
+      garage.classList.add('hidden');
     },
     showCredits() {
       credits.classList.remove('hidden');

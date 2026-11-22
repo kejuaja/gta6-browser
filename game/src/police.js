@@ -1,13 +1,13 @@
 // The wanted level and the police: crimes add heat (witnessed or not), heat sets the stars, the
 // stars set how many units are dispatched. Cruisers chase along the road grid and ram, crews get
 // out and arrest (one star) or shoot (two and up), and staying out of sight long enough loses them.
-import { GRID, WANTED_THRESHOLDS, POLICE_UNITS, CRIMES, DENSITY, COP_SIGHT, PATROLS, policeModelFor } from './config.js';
+import { fireWeapon } from './combat.js';
 import { spawnTrafficCar } from './traffic.js';
+import { GRID, WANTED_THRESHOLDS, POLICE_UNITS, CRIMES, DENSITY, COP_SIGHT, PATROLS, policeModelFor } from './config.js';
 import { lanePoint, nodePos } from './citymap.js';
 import { createVehicle, driveVehicle, exitPoint, removeVehicle } from './vehicles.js';
 import { createCharacter, moveCharacter, removeCharacter } from './characters.js';
 import { LOOKS } from './models.js';
-import { fireWeapon } from './combat.js';
 import { lineOfSight, angleDiff } from './physics.js';
 
 const N = GRID.blocks;

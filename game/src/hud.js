@@ -2,10 +2,10 @@
 // and armour bars, money, clock, weapon and ammo, wanted stars, the mission objective and timer,
 // subtitles, banners (mission passed, busted), help toasts, district names and the car's name,
 // speed and radio station. Also draws the full city map for the pause menu.
-import { WEAPONS, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
-import { nextMissionMarker } from './missions.js';
-import { raceMarkers, raceStatus } from './races.js';
 import { rankInfo } from './respect.js';
+import { nextMissionMarker } from './missions.js';
+import { WEAPONS, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
+import { raceMarkers, raceStatus } from './races.js';
 
 const MAP_X0 = -180;
 const MAP_Z0 = -60;

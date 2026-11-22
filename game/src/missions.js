@@ -2,6 +2,7 @@
 // somewhere, steal a car, collect, kill, chase, lose the cops); the runner shows each step's
 // objective and dialogue, marks its target on the map, checks it, pays out and fails it when
 // the player dies, is busted or loses what the mission needed.
+import { setWanted, clearWanted } from './police.js';
 import { WEAPONS, WANTED_THRESHOLDS } from './config.js';
 import { LOOKS } from './models.js';
 import { addBeacon, removeBeacon, moveBeacon, burst, FX } from './effects.js';
@@ -10,7 +11,6 @@ import { removeCharacter } from './characters.js';
 import { spawnPed } from './crowd.js';
 import { spawnHostile } from './hostiles.js';
 import { giveWeapon } from './player.js';
-import { setWanted, clearWanted } from './police.js';
 import { RACES, startRace } from './races.js';
 
 /** The cast, so the dialogue's names stay one spelling. */

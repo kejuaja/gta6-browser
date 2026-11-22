@@ -2,6 +2,8 @@
 // system once; wires the systems' hooks (crimes, panic, kills, cars entered); starts a new game
 // or a saved one; steps everything in order; and handles dying, getting busted and respawning.
 import * as THREE from 'three';
+import { createGarage, updateGarage } from './garage.js';
+import { createHud } from './hud.js';
 import { DENSITY } from './config.js';
 import { createRng } from './rng.js';
 import { buildCityMap } from './citymap.js';
@@ -21,9 +23,7 @@ import { updateHostiles, hostileHurt } from './hostiles.js';
 import { createStory, updateStory, failMission } from './missions.js';
 import { createPickups, updatePickups, dropCash } from './pickups.js';
 import { createShop, updateShop } from './shop.js';
-import { createGarage, updateGarage } from './garage.js';
 import { addRespect, updateRespect, resetRespectWatch } from './respect.js';
-import { createHud } from './hud.js';
 import { createAudio } from './audio.js';
 import { saveGame as storeSave, loadSettings } from './save.js';
 

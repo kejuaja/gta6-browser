@@ -4,9 +4,9 @@
 //
 // ?seed=N fixes the city's traffic and crowds. ?shot=chase|shootout|pursuit|beach|title stages that
 // scene instead of the menus (see shots.js) and sets window.__shotReady once it is painted.
+import { createGame, startGame, startTitle, stepGame, frameGame } from './world.js';
 import { STEP } from './config.js';
 import { createInput } from './input.js';
-import { createGame, startGame, startTitle, stepGame, frameGame } from './world.js';
 import { createMenus } from './menus.js';
 import { loadSave, saveSettings } from './save.js';
 import { stageShot } from './shots.js';

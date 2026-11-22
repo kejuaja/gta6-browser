@@ -64,7 +64,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-banner.failed .sub { color: #fff; font-size: 22px; text-shadow: 2px 2px 0 #000; }
 .hud-toast { position: absolute; top: 16px; left: 50%; margin-left: -190px; width: 380px; box-sizing: border-box; padding: 12px 16px; background: rgba(13, 11, 20, 0.75); border-radius: 8px; border-top: 3px solid var(--teal); font: 600 condensed 18px/1.35 var(--narrow); opacity: 0; transform: translateY(-8px); transition: opacity 0.25s, transform 0.25s; }
 .hud-toast.show { opacity: 1; transform: none; }
-.hud-district { position: absolute; right: 26px; bottom: 168px; text-align: right; opacity: 0; transition: opacity 0.6s; }
+.hud-district { position: absolute; right: 26px; bottom: 178px; text-align: right; opacity: 0; transition: opacity 0.6s; }
 .hud-district.show { opacity: 1; }
 .hud-district .name { font: 900 38px var(--display); font-style: italic; color: #fff; -webkit-text-stroke: 1.5px #3b1d00; text-shadow: 3px 3px 0 #ff4f9a; }
 .hud-district .tag { font: 700 16px var(--text); color: #ffe7c2; text-shadow: 1px 1px 2px #000; }
@@ -75,7 +75,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-car.red { --cond: #ff4a3d; }
 .hud-car .name { grid-area: name; align-self: end; font: 900 condensed 22px var(--narrow); font-style: italic; letter-spacing: 0.5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hud-car .speed { grid-area: speed; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
-.hud-car .speed .n { font: 900 44px/1 var(--display); color: #fff; text-shadow: 3px 3px 0 #000; }
+.hud-car .speed .n { font: 900 54px/0.95 var(--display); color: #fff; text-shadow: 3px 3px 0 #000; }
 .hud-car .speed .u { font: 900 condensed 14px var(--narrow); letter-spacing: 2px; color: #e8dcff; }
 .hud-car .cond { grid-area: cond; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
 .hud-car .cond .k { font: 900 condensed 14px var(--narrow); letter-spacing: 1px; color: #e8dcff; }

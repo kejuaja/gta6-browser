@@ -110,7 +110,7 @@ function wireHooks(game) {
   game.onEnterVehicle = (v) => {
     game.lastCar = v;
     if (!game.radioChosen) game.audio.setRadio(true);
-    game.hud.showCar(v.spec.name, game.audio.radioOn);
+    game.hud.showCar();
   };
   game.onWantedUp = (level) => {
     game.stats.maxWanted = Math.max(game.stats.maxWanted, level);

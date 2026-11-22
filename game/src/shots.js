@@ -165,7 +165,7 @@ function beach(game) {
   const car = createVehicle(game, 'kestrel', -3.4, 214, 0, 0xff6b9d);
   car.vz = 15;
   enterVehicle(game, game.player, car);
-  game.hud.showCar(car.spec.name, true);
+  game.hud.showCar();
   run(game, 1.4, scriptedInput(['KeyW']));
   settleCamera(game, -0.62, 0.12);
   game.hud.clearMessages();
@@ -367,6 +367,8 @@ function roadblock(game) {
   run(game, 1.0, scriptedInput(['KeyW']));
   game.player.armor = 72;
   game.player.health = 81;
+  // The truck has been through the chase from Coral Heights: dented, not yet smoking.
+  truck.health = 610;
   placeRoadblock(game, { x: 0, z: truck.z - 17, alongX: false, dir: -1 });
   const flank = [policeUnit(game, 'psuv', truck.x + 4.4, truck.z + 2, Math.PI, 20), policeUnit(game, 'psuv', truck.x - 4.4, truck.z - 2, Math.PI, 20)];
   run(game, 0.3, scriptedInput(['KeyW']));
@@ -469,6 +471,7 @@ function streetrace(game) {
   const def = RACES.find((r) => r.id === 'strip');
   const car = createVehicle(game, 'kestrel', def.start.x, def.start.z, 0, 0xff3b30);
   applyUpgrades(car, { engine: 2, armour: 0, tyres: 2 });
+  car.health = 840; // scraped a wall on the first leg
   enterVehicle(game, game.player, car);
   const r = startRace(game, def);
   r.countdown = 0;

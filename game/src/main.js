@@ -251,7 +251,7 @@ function handleKeys() {
     } else if (input.pressed('KeyQ')) {
       game.radioChosen = true;
       const on = game.audio.toggleRadio();
-      if (game.player.vehicle) game.hud.showCar(game.player.vehicle.spec.name, on);
+      if (game.player.vehicle && on) game.hud.showCar();
     }
   } else if (game.mode === 'paused' && (input.pressed('Escape') || input.pressed('KeyP'))) resume();
   else if (game.mode === 'shop' && input.pressed('Escape')) closeShop();

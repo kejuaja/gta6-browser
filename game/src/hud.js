@@ -225,9 +225,17 @@ export function createHud(root, city) {
   const district = el('div', 'hud-district', hud);
   const districtName = el('div', 'name', district);
   const districtTag = el('div', 'tag', district);
+  // The car block: name, big speed, CONDITION from the car's health (and a word for it), the radio.
   const car = el('div', 'hud-car', hud);
   const carName = el('div', 'name', car);
-  const carSpeed = el('div', 'speed', car);
+  const carSpeedBox = el('div', 'speed', car);
+  const carSpeed = el('span', 'n', carSpeedBox);
+  el('span', 'u', carSpeedBox, 'KM/H');
+  const carCond = el('div', 'cond', car);
+  el('span', 'k', carCond, 'CONDITION');
+  const carPct = el('span', 'pct', carCond);
+  const carFill = el('div', 'fill', el('div', 'cbar', car));
+  const carState = el('span', 'tag state', car);
   const carRadio = el('div', 'radio', car);
   const crosshair = el('div', 'hud-crosshair', hud);
   const mouseHint = el('div', 'hud-mousehint', hud, 'Click the game to capture the mouse, or drag with the mouse to look around');
@@ -299,9 +307,8 @@ export function createHud(root, city) {
       state.toasts.length = 0;
       toast.classList.remove('show');
     },
-    showCar(name, radio) {
-      carName.textContent = name;
-      carRadio.textContent = radio ? '♫ Palm FM 88.4' : 'Radio off';
+    /** Lights the radio line for a moment (getting in, Q). */
+    showCar() {
       state.carTime = 4;
     },
     setVisible(on) {
@@ -377,12 +384,20 @@ export function createHud(root, city) {
         state.districtTime -= dt;
         if (state.districtTime <= 0) district.classList.remove('show');
       }
-      if (p.vehicle) {
-        car.classList.add('show');
-        carSpeed.textContent = `${Math.round(Math.abs(p.vehicle.fwd) * 3.6)} km/h`;
-        carName.style.opacity = state.carTime > 0 ? 1 : 0.55;
+      const v = p.vehicle;
+      if (v) {
+        // Smoke starts under 420 health and fire at 0 (vehicles.js): the word follows the same lines.
+        const pct = Math.max(0, Math.min(100, Math.round((v.health / v.maxHealth) * 100)));
+        setText(carName, v.spec.name.toUpperCase());
+        setText(carSpeed, String(Math.round(Math.abs(v.fwd) * 3.6)));
+        setText(carPct, `${pct}%`);
+        setText(carState, v.burn > 0 ? 'ON FIRE' : v.wrecked ? 'WRECKED' : v.health < 420 ? 'SMOKING' : pct >= 90 ? 'MINT' : pct >= 65 ? 'SCRATCHED' : 'DENTED');
+        setClass(car, `hud-car show ${v.burn > 0 || pct < 35 ? 'red' : pct < 65 ? 'amber' : 'green'}`);
+        carFill.style.width = `${pct}%`;
+        setText(carRadio, game.audio && game.audio.radioOn ? '♫ PALM FM 88.4 · SYNTHWAVE · 104 BPM' : '♫ RADIO OFF · Q TO TUNE IN');
+        setClass(carRadio, state.carTime > 0 ? 'radio new' : 'radio');
         state.carTime -= dt;
-      } else car.classList.remove('show');
+      } else setClass(car, 'hud-car');
       crosshair.classList.toggle('show', Boolean(p.aiming && !p.vehicle) || (p.vehicle && p.weapon !== 'fists' && game.input && game.input.mouse.right));
       const input = game.input;
       if (input && game.mode === 'play' && input.mode === 'capture' && !input.locked) {

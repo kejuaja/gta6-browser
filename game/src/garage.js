@@ -210,6 +210,6 @@ export function updateGarage(game) {
     return;
   }
   // Dex knocks the dents out for free while you browse.
-  v.health = Math.max(v.health, 1000);
+  v.health = Math.max(v.health, v.maxHealth);
   if (game.openGarage) game.openGarage();
 }

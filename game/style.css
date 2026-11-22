@@ -63,15 +63,28 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-banner.failed .sub { color: #fff; font-size: 22px; text-shadow: 2px 2px 0 #000; }
 .hud-toast { position: absolute; top: 16px; left: 50%; margin-left: -190px; width: 380px; box-sizing: border-box; padding: 12px 16px; background: rgba(13, 11, 20, 0.75); border-radius: 8px; border-top: 3px solid var(--teal); font: 600 15px/1.35 var(--text); opacity: 0; transform: translateY(-8px); transition: opacity 0.25s, transform 0.25s; }
 .hud-toast.show { opacity: 1; transform: none; }
-.hud-district { position: absolute; right: 30px; bottom: 150px; text-align: right; opacity: 0; transition: opacity 0.6s; }
+.hud-district { position: absolute; right: 26px; bottom: 168px; text-align: right; opacity: 0; transition: opacity 0.6s; }
 .hud-district.show { opacity: 1; }
 .hud-district .name { font: 900 38px var(--display); font-style: italic; color: #fff; -webkit-text-stroke: 1.5px #3b1d00; text-shadow: 3px 3px 0 #ff4f9a; }
 .hud-district .tag { font: 700 16px var(--text); color: #ffe7c2; text-shadow: 1px 1px 2px #000; }
-.hud-car { position: absolute; right: 30px; bottom: 28px; text-align: right; opacity: 0; transition: opacity 0.3s; }
+/* The car block: name and condition on the left, a big speed on the right, the radio beneath. */
+.hud-car { --cond: #4dff88; position: absolute; right: 22px; bottom: 22px; width: 344px; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name speed" "cond speed" "bar state" "radio radio"; column-gap: 10px; padding: 8px 12px 9px; background: rgba(13, 11, 20, 0.78); border-radius: 8px; border-right: 4px solid var(--cond); box-shadow: 0 4px 14px rgba(0,0,0,0.4); opacity: 0; transition: opacity 0.3s; }
 .hud-car.show { opacity: 1; }
-.hud-car .name { font: 900 20px var(--display); font-style: italic; text-shadow: 2px 2px 0 var(--ink); transition: opacity 0.5s; }
-.hud-car .speed { font: 900 40px var(--display); color: #fff; text-shadow: 3px 3px 0 var(--ink); }
-.hud-car .radio { font: 700 15px var(--text); color: var(--teal); text-shadow: 1px 1px 2px #000; }
+.hud-car.amber { --cond: #ffb000; }
+.hud-car.red { --cond: #ff4a3d; }
+.hud-car .name { grid-area: name; align-self: end; font: 900 19px var(--display); font-style: italic; letter-spacing: 0.5px; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-car .speed { grid-area: speed; display: flex; flex-direction: column; align-items: flex-end; line-height: 1; }
+.hud-car .speed .n { font: 900 44px/1 var(--display); color: #fff; text-shadow: 3px 3px 0 #000; }
+.hud-car .speed .u { font: 900 12px var(--display); letter-spacing: 2px; color: #e8dcff; }
+.hud-car .cond { grid-area: cond; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+.hud-car .cond .k { font: 900 12px var(--display); letter-spacing: 1px; color: #e8dcff; }
+.hud-car .cond .pct { font: 900 20px var(--display); color: var(--cond); }
+.hud-car .state { grid-area: state; margin-top: 5px; justify-self: end; font-size: 14px; background: var(--cond); color: #10130a; }
+.hud-car.red .state { color: #fff; }
+.hud-car .cbar { grid-area: bar; align-self: center; margin-top: 5px; height: 12px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.5); border-radius: 5px; overflow: hidden; }
+.hud-car .cbar .fill { height: 100%; background: var(--cond); box-shadow: 0 0 8px var(--cond); transition: width 0.3s; }
+.hud-car .radio { grid-area: radio; margin-top: 6px; font: 800 14px var(--text); letter-spacing: 0.5px; color: var(--teal); white-space: nowrap; }
+.hud-car .radio.new { color: #fff; text-shadow: 0 0 8px var(--teal); }
 .hud-crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px; margin: -11px 0 0 -11px; border: 2px solid rgba(255,255,255,0.9); border-radius: 50%; box-shadow: 0 0 0 1px rgba(0,0,0,0.6); opacity: 0; }
 .hud-crosshair::after { content: ""; position: absolute; left: 9px; top: 9px; width: 4px; height: 4px; background: #ff4f4f; border-radius: 50%; }
 .hud-crosshair.show { opacity: 1; }
@@ -225,7 +238,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .rank-bar .fill { height: 100%; background: linear-gradient(90deg, #ff9500, #ffd23f); transition: width 0.4s; }
 .hud-rank-pop { margin-top: 3px; font: 900 16px var(--display); color: #ffd23f; text-shadow: 2px 2px 0 #3b2300, 0 0 4px #000; opacity: 0; transition: opacity 0.3s; min-height: 1.2em; }
 .hud-rank-pop.show { opacity: 1; }
-.hud-subtitle { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); width: min(640px, 52vw); box-sizing: border-box; display: flex; gap: 12px; align-items: center; padding: 9px 14px 9px 9px; background: rgba(13, 11, 20, 0.8); border-radius: 10px; border-left: 4px solid var(--sun); box-shadow: 0 6px 18px rgba(0,0,0,0.45); opacity: 0; transition: opacity 0.25s; }
+.hud-subtitle { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); width: min(540px, 42vw); box-sizing: border-box; display: flex; gap: 12px; align-items: center; padding: 9px 14px 9px 9px; background: rgba(13, 11, 20, 0.8); border-radius: 10px; border-left: 4px solid var(--sun); box-shadow: 0 6px 18px rgba(0,0,0,0.45); opacity: 0; transition: opacity 0.25s; }
 .hud-subtitle.show { opacity: 1; }
 .hud-subtitle .body { flex: 1; min-width: 0; }
 .hud-subtitle .who { display: flex; align-items: baseline; gap: 10px; }

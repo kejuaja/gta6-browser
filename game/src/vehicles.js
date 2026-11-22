@@ -32,6 +32,7 @@ export function createVehicle(game, model, x, z, yaw, color = null) {
     lat: 0,
     steer: 0,
     health: spec.health ?? (spec.police ? 1300 : 1000),
+    maxHealth: spec.health ?? (spec.police ? 1300 : 1000),
     wrecked: false,
     burn: 0,
     driver: null,

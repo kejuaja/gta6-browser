@@ -245,7 +245,7 @@ function startStep(game, m) {
       const v = createVehicle(game, step.model, step.x, step.z, step.yaw, step.color);
       v.ai = 'flee';
       v.mission = m;
-      v.health = 1400;
+      v.health = v.maxHealth = 1400;
       const driver = spawnPed(game, step.x, step.z, LOOKS.gang);
       driver.kind = 'target';
       driver.vehicle = v;

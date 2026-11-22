@@ -421,6 +421,8 @@ function gunfight(game) {
   game.roadblockTimer = 99;
   game.heli.cooldown = 0;
   const rb = placeRoadblock(game, { x: 266, z: 444, alongX: true, dir: 1 });
+  // A cruiser coming up the street behind Nico: it pulls up and its crew gets out (off camera).
+  policeUnit(game, 'cruiser', 212, 442.6, Math.PI / 2, 13);
   for (const [dx, dz] of [[7, -9.5], [11, 9.8], [16, -10.2], [4, 10.4], [20, 9.6]]) spawnPed(game, p.x + dx, p.z + dz);
   panic(game, p.x + 12, p.z, 40);
   game.rig.yaw = Math.PI / 2;

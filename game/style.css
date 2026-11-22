@@ -243,3 +243,8 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .portrait .hair-back { display: none; left: 15px; top: 10px; width: 36px; height: 44px; border-radius: 16px 16px 8px 8px; background: var(--hair); }
 .portrait.long .hair-back { display: block; }
 .portrait:not(.face) .shirt, .portrait:not(.face) .head, .portrait:not(.face) .hair { display: none; }
+
+/* The right column's loose lines sit on dark pills so they read over a bright sky. */
+.hud-seen.show, .hud-rank-pop.show, .hud-ammo { padding: 2px 9px; border-radius: 6px; background: rgba(13, 11, 20, 0.72); }
+.hud-rank-pop:not(.show) { visibility: hidden; }
+.hud-stars { font-size: 34px; }

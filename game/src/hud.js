@@ -1,8 +1,10 @@
 // The heads-up display, drawn in HTML over the 3D view: a rotating minimap with blips, health
-// and armour bars, money, clock, weapon and ammo, wanted stars, the mission objective and timer,
-// subtitles, banners (mission passed, busted), help toasts, district names and the car's name,
-// speed and radio station. Also draws the full city map for the pause menu.
-import { rankInfo } from './respect.js';
+// and armour bars, money, clock, the weapon bar, wanted stars with IN SIGHT / HIDDEN, the police
+// dispatch board, the mission card and race card, the rank block, subtitles with the speaker's
+// portrait, banners (mission passed, busted), help toasts, district names and the car's name,
+// speed and radio station. Everything is read from the game's state each frame. Also draws the
+// full city map for the pause menu.
+import { rankInfo, RANKS } from './respect.js';
 import { nextMissionMarker, STORY } from './missions.js';
 import { dispatchRows, escapeTime } from './police.js';
 import { WEAPONS, WEAPON_ORDER, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
@@ -26,6 +28,21 @@ const WEAPON_SLOT = {
   smg: { short: 'HORNET', icon: 'M2 6h34v5h-8l-1 3h-4l-1-3h-4l-2 8H9l2-8H2zM22 11h4v8h-4zM36 7h3v2h-3z' },
   shotgun: { short: 'BREAKER 12', icon: 'M1 7h38v3H17l-7 6H3l5-6H1zM20 10h12v2H20z' },
 };
+
+/**
+ * The cast in the subtitle box: name, role in the story, and a portrait drawn in CSS (backdrop,
+ * skin, hair or cap, shirt; `long` hair falls to the shoulders).
+ */
+const CAST = {
+  Nico: { name: 'Nico Reyes', role: 'YOU · BACK FROM THE DEAD', bg: '#2a6f97', skin: '#c68863', hair: '#1b1b1b', shirt: '#ff8a3d' },
+  'Mama Lucia': { name: 'Mama Lucia', role: "NICO'S AUNT · LUCIA'S DINER", bg: '#ff6fa5', skin: '#b97a57', hair: '#8a8a8a', shirt: '#ffffff', long: true },
+  Dex: { name: 'Dex', role: "MECHANIC · DEX'S GARAGE", bg: '#5f8f1f', skin: '#6b4329', hair: '#ff9f1a', shirt: '#3d5a80' },
+  Val: { name: 'Val', role: 'OWNER · THE VELVET MOON', bg: '#7b2cbf', skin: '#e0b18e', hair: '#b0172f', shirt: '#151515', long: true },
+  'Nurse Okoro': { name: 'Nurse Okoro', role: 'HOSPITAL NURSE', bg: '#3fb6dc', skin: '#5a3825', hair: '#111111', shirt: '#9fe3c6' },
+  'Sgt. Brannigan': { name: 'Sgt. Brannigan', role: "DIRTY COP · VOSS'S MAN IN PBPD", bg: '#1d3557', skin: '#f1c7a6', hair: '#10182a', shirt: '#22304a' },
+  Rico: { name: 'Rico Vance', role: "VOSS'S NEPHEW · STRIP RACER", bg: '#ffb000', skin: '#d9a074', hair: '#3b2314', shirt: '#e63946' },
+};
+CAST['Rico Vance'] = CAST.Rico;
 
 /** A mission's stages: the steps that show the player an objective, counted once per mission. */
 const stageCache = new Map();
@@ -104,10 +121,18 @@ export function createHud(root, city) {
   const top = el('div', 'hud-top', hud);
   const clock = el('div', 'hud-clock', top);
   const money = el('div', 'hud-money', top);
-  const rank = el('div', 'hud-rank', top);
-  const rankName = el('span', 'name', rank);
-  const rankBar = el('div', 'rank-bar', rank);
+  // The rank block: rank number and name, respect toward the next rank on a thick bar.
+  const rank = el('div', 'hud-rankblock', top);
+  const rankNo = el('div', 'no', rank);
+  const rankText = el('div', 'text', rank);
+  const rankHead = el('div', 'line', rankText);
+  const rankName = el('span', 'name', rankHead);
+  const rankOf = el('span', 'of', rankHead);
+  const rankBar = el('div', 'rank-bar', rankText);
   const rankFill = el('div', 'fill', rankBar);
+  const rankFoot = el('div', 'line small', rankText);
+  const rankPoints = el('span', 'points', rankFoot);
+  const rankNext = el('span', 'next', rankFoot);
   const rankPop = el('div', 'hud-rank-pop', top);
   // The weapon bar: every slot numbered as the keys pick it, the one in hand lit, the rest LOCKED until bought.
   const weapons = el('div', 'hud-weapons', top);
@@ -182,6 +207,17 @@ export function createHud(root, city) {
   const armorFill = el('div', 'fill', armorBar);
 
   const subtitle = el('div', 'hud-subtitle', hud);
+  const portrait = el('div', 'portrait', subtitle);
+  el('div', 'shirt', portrait);
+  const portraitInitials = el('div', 'initials', portrait);
+  el('div', 'hair-back', portrait);
+  el('div', 'head', portrait);
+  el('div', 'hair', portrait);
+  const lineBox = el('div', 'body', subtitle);
+  const lineWho = el('div', 'who', lineBox);
+  const lineName = el('span', 'name', lineWho);
+  const lineRole = el('span', 'role', lineWho);
+  const lineText = el('div', 'what', lineBox);
   const banner = el('div', 'hud-banner', hud);
   const bannerTitle = el('div', 'title', banner);
   const bannerSub = el('div', 'sub', banner);
@@ -215,9 +251,15 @@ export function createHud(root, city) {
       subtitle.classList.remove('show');
       return;
     }
-    subtitle.innerHTML = '';
-    el('span', 'who', subtitle, `${line.who}: `);
-    el('span', 'what', subtitle, line.text);
+    const who = CAST[line.who];
+    setText(lineName, who ? who.name : line.who);
+    setText(lineRole, who ? who.role : '');
+    setText(lineText, line.text);
+    setText(portraitInitials, who ? '' : line.who.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase());
+    const look = who ?? { bg: '#555a66', skin: 'transparent', hair: 'transparent', shirt: 'transparent' };
+    portrait.style.cssText = `--bg:${look.bg};--skin:${look.skin};--hair:${look.hair};--shirt:${look.shirt}`;
+    portrait.classList.toggle('long', Boolean(who && who.long));
+    portrait.classList.toggle('face', Boolean(who));
     subtitle.classList.add('show');
     state.lineTime = Math.max(3, line.text.length * 0.06);
   }
@@ -272,7 +314,11 @@ export function createHud(root, city) {
       clock.textContent = `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
       money.textContent = `$${Math.floor(p.money).toLocaleString('en-US')}`;
       const ri = rankInfo(game);
-      rankName.textContent = `${ri.name.toUpperCase()} · ${ri.respect} RESPECT`;
+      setText(rankNo, String(ri.rank + 1));
+      setText(rankName, ri.name.toUpperCase());
+      setText(rankOf, `RANK ${ri.rank + 1}/${RANKS.length}`);
+      setText(rankPoints, ri.next ? `${ri.respect.toLocaleString('en-US')} / ${RANKS[ri.rank + 1].at.toLocaleString('en-US')} RESPECT` : `${ri.respect.toLocaleString('en-US')} RESPECT`);
+      setText(rankNext, ri.next ? `▸ ${ri.next.toUpperCase()}` : 'TOP RANK');
       rankFill.style.width = `${Math.round(ri.progress * 100)}%`;
       const pop = game.respectPop;
       rankPop.classList.toggle('show', Boolean(pop && pop.time > 0));

@@ -18,7 +18,13 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud { position: absolute; inset: 0; }
 .hud.hurt::after { content: ""; position: absolute; inset: 0; box-shadow: inset 0 0 120px 30px rgba(200, 0, 0, 0.55); animation: hurt 0.5s ease-out forwards; }
 @keyframes hurt { to { opacity: 0; } }
-.hud-top { position: absolute; top: 18px; right: 24px; text-align: right; }
+.hud-top { position: absolute; top: 14px; right: 22px; display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+.hud-top > .hud-stars { order: 1; }
+.hud-top > .hud-seen { order: 2; }
+.hud-top > .hud-rankblock { order: 3; }
+.hud-top > .hud-rank-pop { order: 4; }
+.hud-top > .hud-weapons { order: 5; }
+.hud-top > .hud-ammo { order: 6; }
 .hud-clock { font: 700 22px var(--display); letter-spacing: 1px; text-shadow: 2px 2px 0 var(--ink); }
 .hud-money { font: 900 34px var(--display); color: #6dff8d; letter-spacing: 1px; text-shadow: 2px 2px 0 #08350f, -1px -1px 0 #08350f, 3px 3px 6px rgba(0,0,0,0.5); }
 .hud-weapons { margin-top: 8px; display: flex; justify-content: flex-end; gap: 5px; }
@@ -48,9 +54,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .bar.armor .fill { background: linear-gradient(90deg, #2f7dff, #7db4ff); }
 @keyframes pulse { to { opacity: 0.45; } }
 
-.hud-subtitle { position: absolute; bottom: 70px; left: 50%; transform: translateX(-50%); width: min(820px, 60vw); text-align: center; font: 700 21px var(--text); text-shadow: 2px 2px 3px #000, 0 0 6px #000; opacity: 0; transition: opacity 0.25s; }
-.hud-subtitle.show { opacity: 1; }
-.hud-subtitle .who { color: var(--sun); }
 .hud-banner { position: absolute; top: 34%; left: 0; right: 0; text-align: center; opacity: 0; transform: scale(0.9); transition: opacity 0.3s, transform 0.3s; }
 .hud-banner.show { opacity: 1; transform: scale(1); }
 .hud-banner .title { font: 900 64px var(--display); font-style: italic; letter-spacing: 2px; color: #ffd23f; -webkit-text-stroke: 2px #2a1300; text-shadow: 4px 4px 0 #2a1300; }
@@ -58,7 +61,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-banner.failed .title { color: #ff5a4e; }
 .hud-banner .sub { font: 900 30px var(--display); color: #6dff8d; text-shadow: 2px 2px 0 #08350f; }
 .hud-banner.failed .sub { color: #fff; font-size: 22px; text-shadow: 2px 2px 0 #000; }
-.hud-toast { position: absolute; top: 18px; left: 50%; margin-left: -210px; width: 420px; box-sizing: border-box; padding: 12px 16px; background: rgba(13, 11, 20, 0.75); border-radius: 8px; border-top: 3px solid var(--teal); font: 600 15px/1.35 var(--text); opacity: 0; transform: translateY(-8px); transition: opacity 0.25s, transform 0.25s; }
+.hud-toast { position: absolute; top: 16px; left: 50%; margin-left: -190px; width: 380px; box-sizing: border-box; padding: 12px 16px; background: rgba(13, 11, 20, 0.75); border-radius: 8px; border-top: 3px solid var(--teal); font: 600 15px/1.35 var(--text); opacity: 0; transform: translateY(-8px); transition: opacity 0.25s, transform 0.25s; }
 .hud-toast.show { opacity: 1; transform: none; }
 .hud-district { position: absolute; right: 30px; bottom: 150px; text-align: right; opacity: 0; transition: opacity 0.6s; }
 .hud-district.show { opacity: 1; }
@@ -73,7 +76,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-crosshair::after { content: ""; position: absolute; left: 9px; top: 9px; width: 4px; height: 4px; background: #ff4f4f; border-radius: 50%; }
 .hud-crosshair.show { opacity: 1; }
 .hud.hidden { display: none; }
-.hud-mousehint { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); padding: 6px 14px; border-radius: 16px; background: rgba(13, 11, 20, 0.6); font: 600 13px var(--text); color: #ffe7c2; opacity: 0; transition: opacity 0.3s; }
+.hud-mousehint { position: absolute; left: 50%; bottom: 118px; transform: translateX(-50%); padding: 6px 14px; border-radius: 16px; background: rgba(13, 11, 20, 0.6); font: 600 13px var(--text); color: #ffe7c2; opacity: 0; transition: opacity 0.3s; }
 .hud-mousehint.show { opacity: 1; }
 .gpu-warning { position: fixed; right: 18px; top: 18px; max-width: 420px; padding: 12px 16px; background: #3a2a06; border: 2px solid #ffb347; border-radius: 10px; color: #fff; font: 600 14px/1.45 "Segoe UI", sans-serif; z-index: 10; cursor: pointer; }
 .error-box { position: fixed; left: 50%; top: 18px; transform: translateX(-50%); max-width: 80vw; padding: 12px 18px; background: #3a0d12; border: 2px solid #ff5a4e; border-radius: 10px; color: #fff; font: 600 14px/1.4 "Segoe UI", sans-serif; white-space: pre-wrap; z-index: 10; pointer-events: auto; }
@@ -146,12 +149,6 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .garage-panel { width: min(410px, 40vw); border-color: #b4ff3f; box-shadow: 0 0 40px rgba(180, 255, 63, 0.3); }
 .garage-panel .shop-title { color: #b4ff3f; text-shadow: 0 0 14px rgba(180, 255, 63, 0.7); }
 .garage-panel .shop-item:hover { background: rgba(180, 255, 63, 0.15); border-color: #b4ff3f; }
-.hud-rank { margin-top: 2px; display: inline-flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.hud-rank .name { font: 800 13px var(--text); letter-spacing: 1px; color: #ffd23f; text-shadow: 1px 1px 0 #000, 0 0 4px #000; }
-.rank-bar { width: 150px; height: 6px; background: rgba(0,0,0,0.55); border: 1px solid rgba(255,255,255,0.7); border-radius: 4px; overflow: hidden; }
-.rank-bar .fill { height: 100%; background: linear-gradient(90deg, #ff9500, #ffd23f); }
-.hud-rank-pop { font: 900 15px var(--display); color: #ffd23f; text-shadow: 2px 2px 0 #3b2300; opacity: 0; transition: opacity 0.3s; min-height: 1.2em; }
-.hud-rank-pop.show { opacity: 1; }
 .garage-panel .shop-title { font-size: 32px; white-space: nowrap; }
 
 /* ---------------- HUD panels: the left column (dispatch), wanted sight tag */
@@ -213,3 +210,36 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-racecard .row .gap { text-align: right; color: #ffb980; font-size: 14px; }
 .hud-racecard .row.me { background: rgba(255, 140, 26, 0.85); color: #1e1200; }
 .hud-racecard .row.me .place, .hud-racecard .row.me .car { color: #1e1200; }
+
+/* ---------------- HUD: the rank block and the subtitle box with the speaker's portrait */
+.hud-rankblock { margin-top: 6px; display: flex; align-items: center; gap: 10px; width: 362px; box-sizing: border-box; padding: 7px 12px 7px 8px; background: rgba(13, 11, 20, 0.74); border-radius: 8px; border-right: 4px solid #ffd23f; box-shadow: 0 4px 14px rgba(0,0,0,0.35); text-align: left; }
+.hud-rankblock .no { flex: none; width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff3b0, #ffb000 60%, #b86b00); color: #2a1300; font: 900 21px/38px var(--display); text-align: center; box-shadow: 0 0 0 2px #2a1300, 0 0 10px rgba(255, 190, 40, 0.6); }
+.hud-rankblock .text { flex: 1; min-width: 0; }
+.hud-rankblock .line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.hud-rankblock .name { font: 900 18px var(--display); font-style: italic; color: #ffd23f; letter-spacing: 0.5px; white-space: nowrap; }
+.hud-rankblock .of { font: 900 12px var(--display); color: #e8dcff; letter-spacing: 1px; white-space: nowrap; }
+.hud-rankblock .line.small { font: 700 13px var(--text); color: #e8dcff; white-space: nowrap; }
+.hud-rankblock .next { overflow: hidden; text-overflow: ellipsis; }
+.hud-rankblock .next { color: var(--teal); font-weight: 800; white-space: nowrap; }
+.rank-bar { margin: 3px 0 2px; height: 10px; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.5); border-radius: 5px; overflow: hidden; }
+.rank-bar .fill { height: 100%; background: linear-gradient(90deg, #ff9500, #ffd23f); transition: width 0.4s; }
+.hud-rank-pop { margin-top: 3px; font: 900 16px var(--display); color: #ffd23f; text-shadow: 2px 2px 0 #3b2300, 0 0 4px #000; opacity: 0; transition: opacity 0.3s; min-height: 1.2em; }
+.hud-rank-pop.show { opacity: 1; }
+.hud-subtitle { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%); width: min(640px, 52vw); box-sizing: border-box; display: flex; gap: 12px; align-items: center; padding: 9px 14px 9px 9px; background: rgba(13, 11, 20, 0.8); border-radius: 10px; border-left: 4px solid var(--sun); box-shadow: 0 6px 18px rgba(0,0,0,0.45); opacity: 0; transition: opacity 0.25s; }
+.hud-subtitle.show { opacity: 1; }
+.hud-subtitle .body { flex: 1; min-width: 0; }
+.hud-subtitle .who { display: flex; align-items: baseline; gap: 10px; }
+.hud-subtitle .who .name { font: 900 18px var(--display); color: var(--sun); }
+.hud-subtitle .who .role { font: 800 12px var(--text); letter-spacing: 1px; color: #e8dcff; }
+.hud-subtitle .what { margin-top: 2px; font: 700 18px/1.3 var(--text); color: #fff; }
+.portrait { position: relative; flex: none; width: 66px; height: 66px; border-radius: 8px; overflow: hidden; background: linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 55%, #000)); box-shadow: inset 0 0 0 2px rgba(255,255,255,0.55); }
+.portrait > div { position: absolute; }
+.portrait .initials { inset: 0; font: 900 26px/66px var(--display); text-align: center; color: #fff; }
+.portrait .shirt { left: 7px; right: 7px; bottom: -14px; height: 30px; border-radius: 50% 50% 0 0; background: var(--shirt); }
+.portrait .head { left: 19px; top: 13px; width: 28px; height: 33px; border-radius: 46% 46% 44% 44%; background: var(--skin); }
+.portrait .head::before { content: ""; position: absolute; left: 6px; top: 14px; width: 4px; height: 4px; border-radius: 50%; background: #1a1a1a; box-shadow: 12px 0 0 #1a1a1a; }
+.portrait .head::after { content: ""; position: absolute; left: 9px; bottom: 6px; width: 10px; height: 3px; border-radius: 0 0 5px 5px; background: #7a2e2e; }
+.portrait .hair { left: 17px; top: 9px; width: 32px; height: 13px; border-radius: 16px 16px 5px 5px; background: var(--hair); }
+.portrait .hair-back { display: none; left: 15px; top: 10px; width: 36px; height: 44px; border-radius: 16px 16px 8px 8px; background: var(--hair); }
+.portrait.long .hair-back { display: block; }
+.portrait:not(.face) .shirt, .portrait:not(.face) .head, .portrait:not(.face) .hair { display: none; }

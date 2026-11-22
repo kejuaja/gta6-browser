@@ -21,9 +21,18 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #f4c9a6; }
 .hud-top { position: absolute; top: 18px; right: 24px; text-align: right; }
 .hud-clock { font: 700 22px var(--display); letter-spacing: 1px; text-shadow: 2px 2px 0 var(--ink); }
 .hud-money { font: 900 34px var(--display); color: #6dff8d; letter-spacing: 1px; text-shadow: 2px 2px 0 #08350f, -1px -1px 0 #08350f, 3px 3px 6px rgba(0,0,0,0.5); }
-.hud-weapon { margin-top: 6px; display: inline-block; background: rgba(13, 11, 20, 0.55); border: 2px solid rgba(255,255,255,0.7); border-radius: 10px; padding: 6px 12px; }
-.hud-weapon-name { font: 900 16px var(--display); text-transform: uppercase; }
-.hud-ammo { font: 700 15px var(--text); color: #ffd56b; min-height: 1em; }
+.hud-weapons { margin-top: 8px; display: flex; justify-content: flex-end; gap: 5px; }
+.hud-weapons .slot { position: relative; width: 74px; height: 66px; box-sizing: border-box; padding: 4px 3px 3px; background: rgba(13, 11, 20, 0.74); border: 2px solid rgba(255,255,255,0.35); border-radius: 7px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; text-align: center; }
+.hud-weapons .slot .key { position: absolute; left: 5px; top: 2px; font: 900 13px var(--display); color: #ffd23f; }
+.hud-weapons .slot .icon { width: 40px; height: 20px; margin-bottom: 1px; fill: #fff; stroke: #fff; stroke-width: 0.6; stroke-linejoin: round; }
+.hud-weapons .slot .wname { font: 900 11px var(--display); letter-spacing: 0.3px; white-space: nowrap; }
+.hud-weapons .slot .ammo { font: 900 15px var(--display); color: #ffd56b; line-height: 18px; }
+.hud-weapons .slot.on { background: linear-gradient(180deg, #ffd23f, #ff9f1a); border-color: #fff; color: #1e1200; box-shadow: 0 0 12px rgba(255, 190, 40, 0.65); }
+.hud-weapons .slot.on .key, .hud-weapons .slot.on .ammo { color: #1e1200; }
+.hud-weapons .slot.on .icon { fill: #1e1200; stroke: #1e1200; }
+.hud-weapons .slot.locked { opacity: 0.55; }
+.hud-weapons .slot.locked .ammo { font-size: 12px; color: #c8c2d8; letter-spacing: 1px; }
+.hud-ammo { margin-top: 3px; font: 900 15px var(--display); letter-spacing: 0.5px; color: #ffd56b; text-shadow: 2px 2px 0 #2a1300, 0 0 4px #000; min-height: 1em; }
 .hud-stars { margin-top: 6px; font-size: 30px; letter-spacing: 2px; }
 .hud-stars .star { color: rgba(255,255,255,0.22); text-shadow: 0 0 2px #000; }
 .hud-stars .star.on { color: #ffd23f; text-shadow: 0 0 8px #ff9500, 2px 2px 0 #3b2300; }

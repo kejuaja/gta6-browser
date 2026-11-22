@@ -5,7 +5,7 @@
 import { rankInfo } from './respect.js';
 import { nextMissionMarker } from './missions.js';
 import { dispatchRows, escapeTime } from './police.js';
-import { WEAPONS, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
+import { WEAPONS, WEAPON_ORDER, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
 import { raceMarkers, raceStatus } from './races.js';
 
 const MAP_X0 = -180;
@@ -18,6 +18,14 @@ const DISTRICT_TINT = { beach: '#e9d7b4', downtown: '#9fb0c4', strip: '#d9a7c7',
 const TAG_CLASS = { RAMMING: 'red', FIRING: 'fire', SPOTLIGHT: 'blue', SEARCHING: 'slate', RETURNING: 'slate', 'CLOSING IN': 'teal', PURSUIT: 'indigo', ROADBLOCK: 'amber', 'ON FOOT': 'purple' };
 const UNIT_ICON = { air: '✚', car: '▰', foot: '●' };
 const DISPATCH_ROWS = 5;
+
+/** The weapon bar: a short name and a side-on silhouette (a 40 x 20 SVG path) for each slot. */
+const WEAPON_SLOT = {
+  fists: { short: 'FISTS', icon: 'M11 6h17a3 3 0 0 1 3 3v6a3 3 0 0 1-3 3H14a3 3 0 0 1-3-3zM7 9h5v6H7a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2z' },
+  pistol: { short: 'VESPER 9', icon: 'M6 5h27v5H17l-2 9H9l2-9H6zM33 6h2v3h-2z' },
+  smg: { short: 'HORNET', icon: 'M2 6h34v5h-8l-1 3h-4l-1-3h-4l-2 8H9l2-8H2zM22 11h4v8h-4zM36 7h3v2h-3z' },
+  shotgun: { short: 'BREAKER 12', icon: 'M1 7h38v3H17l-7 6H3l5-6H1zM20 10h12v2H20z' },
+};
 
 /** Sets an element's text only when it changed, so a steady HUD costs no layout work. */
 function setText(e, text) {
@@ -77,9 +85,16 @@ export function createHud(root, city) {
   const rankBar = el('div', 'rank-bar', rank);
   const rankFill = el('div', 'fill', rankBar);
   const rankPop = el('div', 'hud-rank-pop', top);
-  const weapon = el('div', 'hud-weapon', top);
-  const weaponName = el('div', 'hud-weapon-name', weapon);
-  const ammo = el('div', 'hud-ammo', weapon);
+  // The weapon bar: every slot numbered as the keys pick it, the one in hand lit, the rest LOCKED until bought.
+  const weapons = el('div', 'hud-weapons', top);
+  const slots = WEAPON_ORDER.map((id, n) => {
+    const slot = el('div', 'slot', weapons);
+    el('span', 'key', slot, String(n + 1));
+    slot.insertAdjacentHTML('beforeend', `<svg class="icon" viewBox="0 0 40 20"><path d="${WEAPON_SLOT[id].icon}"/></svg>`);
+    el('span', 'wname', slot, WEAPON_SLOT[id].short);
+    return { id, slot, ammo: el('span', 'ammo', slot) };
+  });
+  const ammo = el('div', 'hud-ammo', top);
   const stars = el('div', 'hud-stars', top);
   const starEls = [];
   for (let n = 0; n < 5; n += 1) starEls.push(el('span', 'star', stars, '★'));
@@ -213,10 +228,14 @@ export function createHud(root, city) {
       const pop = game.respectPop;
       rankPop.classList.toggle('show', Boolean(pop && pop.time > 0));
       if (pop && pop.time > 0) rankPop.textContent = `+${pop.amount} RESPECT  ${pop.reason}`;
+      for (const s of slots) {
+        const owned = p.ammo[s.id];
+        setClass(s.slot, s.id === p.weapon ? 'slot on' : owned ? 'slot' : 'slot locked');
+        setText(s.ammo, !owned ? 'LOCKED' : WEAPONS[s.id].melee ? '∞' : String(owned.mag + owned.reserve));
+      }
       const wdef = WEAPONS[p.weapon];
-      weaponName.textContent = wdef.name;
       const a = p.ammo[p.weapon];
-      ammo.textContent = wdef.melee ? '' : p.reload > 0 ? 'Reloading...' : `${a.mag} / ${a.reserve}`;
+      setText(ammo, wdef.melee ? `${wdef.name.toUpperCase()} · MELEE` : p.reload > 0 ? `${wdef.name.toUpperCase()} · RELOADING…` : `${wdef.name.toUpperCase()} · ${a.mag} / ${a.reserve}`);
       const flash = w.level > 0 && !w.seen && Math.floor(game.time * 3) % 2 === 0;
       starEls.forEach((s, n) => {
         s.classList.toggle('on', n < w.level);

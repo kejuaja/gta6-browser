@@ -461,7 +461,7 @@ function gunfight(game) {
   // Pulled back over Nico's right shoulder: all of him, SMG up, and the roadblock he is firing at.
   const fx = Math.sin(yaw);
   const fz = Math.cos(yaw);
-  placeCamera(game, [p.x - fx * 3.9 - fz * 1.35, 2.15, p.z - fz * 3.9 + fx * 1.35], [aimAt.x, 2.0, aimAt.z], 58);
+  placeCamera(game, [p.x - fx * 3.0 - fz * 1.15, 2.0, p.z - fz * 3.0 + fx * 1.15], [aimAt.x, 1.9, aimAt.z], 58);
 }
 
 /**
@@ -533,7 +533,7 @@ function tuned(game) {
   settleCamera(game, 1.1, 0.2);
   frameGame(game, 1 / 60, { dx: 0, dy: 0 });
   // In front of the bay, low: the SUV's nose and kit, the Kestrel by the door, the garage behind.
-  placeCamera(game, [suv.x - 7.2, 3.2, suv.z - 2.9], [suv.x + 1, 2.6, suv.z + 1.9], 58);
+  placeCamera(game, [suv.x - 7.2, 3.3, suv.z - 2.9], [suv.x + 1, 2.3, suv.z + 1.9], 58);
 }
 
 const SCENES = { roadblock, gunfight, streetrace, tuned, heat, race, garage, citychase, chase, shootout, beach, pursuit, title };

@@ -1,7 +1,7 @@
 // The menus: the title screen over a live view of the city, the pause menu (map, stats, controls,
 // settings, save, quit), the wasted/busted fade and the end credits.
 import { GAME_TITLE, GAME_SUBTITLE } from './config.js';
-import { drawFullMap } from './hud.js';
+import { drawFullMap } from './citymap.js';
 import { STORY } from './missions.js';
 import { TOKEN_SPOTS } from './pickups.js';
 import { rankInfo } from './respect.js';

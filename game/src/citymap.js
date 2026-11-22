@@ -1,8 +1,10 @@
-// The city as data, no graphics: the block grid, each block's district and buildings (the solid
-// boxes everything collides with), palms, street lamps, the road graph and the named places the
-// story uses. cityscape.js turns this into meshes; everything else asks it questions.
+// The city as data: the block grid, each block's district and buildings (the solid boxes everything
+// collides with), palms, street lamps, the road graph and the named places the story uses;
+// cityscape.js turns it into meshes. At the end, the map drawn from it: the minimap and the pause map.
 import { GRID, WORLD, PALETTE } from './config.js';
 import { createRng } from './rng.js';
+import { nextMissionMarker } from './missions.js';
+import { raceMarkers, raceStatus } from './races.js';
 
 const C = GRID.cell;
 const B = GRID.block;
@@ -396,4 +398,253 @@ function buildPois() {
     pier: { x: -110, z: 300, yaw: -Math.PI / 2 },
     quay: { x: 420, z: 626, yaw: Math.PI / 2 },
   };
+}
+
+// ---------------------------------------------------------------- drawing the map
+// The minimap and the pause menu's city map: the city painted once to a canvas, 1 px a metre,
+// and every blip (missions, races, shops, the garage, police, Air 1 and its beam) over it.
+
+const MAP_X0 = -180;
+const MAP_Z0 = -60;
+const MAP_W = 800;
+const MAP_H = 740;
+const DISTRICT_TINT = { beach: '#e9d7b4', downtown: '#9fb0c4', strip: '#d9a7c7', heights: '#a9d39a', docks: '#a8adb5' };
+
+/** The city drawn once, 1 px a metre: sea, sand, grass, roads and blocks by district. */
+export function drawBaseMap(city) {
+  const c = document.createElement('canvas');
+  c.width = MAP_W;
+  c.height = MAP_H;
+  const g = c.getContext('2d');
+  const X = (x) => x - MAP_X0;
+  const Z = (z) => z - MAP_Z0;
+  g.fillStyle = '#3c8fb5';
+  g.fillRect(0, 0, MAP_W, MAP_H);
+  g.fillStyle = '#7fae5e';
+  g.fillRect(X(WORLD.beachX + 4), 0, MAP_W, Z(WORLD.harbourZ));
+  g.fillStyle = '#f0d9a8';
+  g.fillRect(X(WORLD.beachX), 0, 64, Z(WORLD.harbourZ));
+  g.fillStyle = '#b7b2a8';
+  g.fillRect(X(-7), Z(599), 620, 41);
+  const p = WORLD.pier;
+  g.fillStyle = '#b98f66';
+  g.fillRect(X(p.x0), Z(p.z0), p.x1 - p.x0, p.z1 - p.z0);
+  g.fillStyle = '#55585f';
+  const end = GRID.blocks * GRID.cell;
+  g.fillRect(X(-7), Z(-7), end + 14, end + 14);
+  for (const b of city.blocks) {
+    g.fillStyle = b.park ? '#7cc05a' : DISTRICT_TINT[b.district];
+    g.fillRect(X(b.x0), Z(b.z0), b.x1 - b.x0, b.z1 - b.z0);
+  }
+  g.fillStyle = 'rgba(40,40,60,0.28)';
+  for (const s of city.solids) g.fillRect(X(s.x0), Z(s.z0), s.x1 - s.x0, s.z1 - s.z0);
+  return c;
+}
+
+function blipShape(g, x, y, color, shape, size = 6) {
+  g.fillStyle = color;
+  g.strokeStyle = '#111';
+  g.lineWidth = 2;
+  g.beginPath();
+  if (shape === 'spot') {
+    g.fillStyle = 'rgba(255,240,160,0.45)';
+    g.arc(x, y, size, 0, Math.PI * 2);
+    g.fill();
+    return;
+  }
+  if (shape === 'heli') {
+    g.arc(x, y, size, 0, Math.PI * 2);
+    g.fill();
+    g.stroke();
+    g.strokeStyle = '#fff';
+    g.beginPath();
+    g.moveTo(x - size - 4, y - size - 4);
+    g.lineTo(x + size + 4, y + size + 4);
+    g.moveTo(x + size + 4, y - size - 4);
+    g.lineTo(x - size - 4, y + size + 4);
+    g.stroke();
+    return;
+  }
+  if (shape === 'square') g.rect(x - size, y - size, size * 2, size * 2);
+  else if (shape === 'diamond') {
+    g.moveTo(x, y - size - 2);
+    g.lineTo(x + size + 2, y);
+    g.lineTo(x, y + size + 2);
+    g.lineTo(x - size - 2, y);
+    g.closePath();
+  } else g.arc(x, y, size, 0, Math.PI * 2);
+  g.fill();
+  g.stroke();
+}
+
+/** Every blip the maps show, in world coordinates. */
+export function mapBlips(game) {
+  const out = [];
+  const m = game.story.active;
+  const next = nextMissionMarker(game);
+  if (next) out.push({ x: next.x, z: next.z, color: '#ffd23f', shape: 'diamond', label: 'M', edge: true });
+  if (m && m.target) out.push({ x: m.target.x, z: m.target.z, color: `#${m.target.color.toString(16).padStart(6, '0')}`, shape: 'diamond', edge: true });
+  if (m && m.extraBlips) for (const b of m.extraBlips) out.push({ x: b.x, z: b.z, color: `#${b.color.toString(16).padStart(6, '0')}`, shape: 'circle', size: b.small ? 4 : 6, edge: !b.small });
+  for (const r of raceMarkers(game)) out.push({ x: r.x, z: r.z, color: '#ff8c1a', shape: 'square', label: 'R', size: 6 });
+  const rs = raceStatus(game);
+  if (rs) {
+    out.push({ x: rs.next[0], z: rs.next[1], color: '#ff8c1a', shape: 'diamond', edge: true });
+    if (rs.after) out.push({ x: rs.after[0], z: rs.after[1], color: '#ffc47a', shape: 'circle', size: 4 });
+    for (const r of game.race.racers) if (!r.player && !r.done) out.push({ x: r.car.x, z: r.car.z, color: '#ffffff', shape: 'circle', size: 4 });
+  }
+  const s = game.city.pois.safehouse;
+  out.push({ x: s.x, z: s.z, color: '#4dff88', shape: 'square', label: 'S', size: 5 });
+  const paint = game.city.pois.paint;
+  out.push({ x: paint.x, z: paint.z, color: '#ff5fd2', shape: 'square', label: 'P', size: 5 });
+  if (game.garageBeacon) out.push({ x: game.garageBeacon.x, z: game.garageBeacon.z, color: '#b4ff3f', shape: 'square', label: 'G', size: 5 });
+  const shop = game.city.pois.shop;
+  out.push({ x: shop.x, z: shop.z, color: '#3fd0ff', shape: 'square', label: '$', size: 5 });
+  const flash = Math.floor(game.time * 4) % 2 === 0;
+  const heli = game.heli;
+  if (heli && heli.active && !heli.down) {
+    out.push({ x: heli.spot.x, z: heli.spot.z, shape: 'spot', size: 8 });
+    out.push({ x: heli.x, z: heli.z, color: flash ? '#ff3030' : '#3060ff', shape: 'heli', size: 5, edge: true });
+  }
+  for (const rb of game.roadblocks ?? []) out.push({ x: rb.x, z: rb.z, color: '#ff9f1a', shape: 'square', label: '!', size: 6, edge: true });
+  for (const v of game.vehicles) if (v.spec.police && v.siren) out.push({ x: v.x, z: v.z, color: flash ? '#ff3030' : '#3060ff', shape: 'square', size: 4 });
+  for (const c of game.chars) if (c.kind === 'cop' && c.alive && !c.vehicle && game.wanted.level > 0) out.push({ x: c.x, z: c.z, color: flash ? '#ff3030' : '#3060ff', shape: 'circle', size: 3 });
+  return out;
+}
+
+export function drawMinimap(canvas, base, game) {
+  const g = canvas.getContext('2d');
+  const W = canvas.width;
+  const R = W / 2;
+  const p = game.player;
+  const px = p.vehicle ? p.vehicle.x : p.x;
+  const pz = p.vehicle ? p.vehicle.z : p.z;
+  const speed = p.vehicle ? Math.abs(p.vehicle.fwd) : 0;
+  const scale = 1.55 - Math.min(0.6, speed / 40);
+  const rot = game.rig.yaw - Math.PI;
+  g.clearRect(0, 0, W, W);
+  g.save();
+  g.beginPath();
+  g.arc(R, R, R - 3, 0, Math.PI * 2);
+  g.clip();
+  g.fillStyle = '#3c8fb5';
+  g.fillRect(0, 0, W, W);
+  g.translate(R, R);
+  g.rotate(rot);
+  g.scale(scale, scale);
+  g.drawImage(base, MAP_X0 - px, MAP_Z0 - pz);
+  g.restore();
+
+  const cos = Math.cos(rot);
+  const sin = Math.sin(rot);
+  const toMap = (x, z) => {
+    const dx = (x - px) * scale;
+    const dz = (z - pz) * scale;
+    return { x: R + dx * cos - dz * sin, y: R + dx * sin + dz * cos };
+  };
+  for (const b of mapBlips(game)) {
+    let q = toMap(b.x, b.z);
+    const ox = q.x - R;
+    const oy = q.y - R;
+    const d = Math.hypot(ox, oy);
+    if (d > R - 12) {
+      if (!b.edge) continue;
+      q = { x: R + (ox / d) * (R - 12), y: R + (oy / d) * (R - 12) };
+    }
+    blipShape(g, q.x, q.y, b.color, b.shape, b.size ?? 6);
+    if (b.label) {
+      g.fillStyle = '#111';
+      g.font = 'bold 9px sans-serif';
+      g.textAlign = 'center';
+      g.textBaseline = 'middle';
+      g.fillText(b.label, q.x, q.y + 0.5);
+    }
+  }
+  // North marker on the rim.
+  const nx = -sin;
+  const ny = -cos;
+  g.fillStyle = '#fff';
+  g.strokeStyle = '#111';
+  g.lineWidth = 3;
+  g.font = 'bold 13px sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.strokeText('N', R + nx * (R - 12), R + ny * (R - 12));
+  g.fillText('N', R + nx * (R - 12), R + ny * (R - 12));
+  // The player's arrow, turned to where they face.
+  const yaw = p.vehicle ? p.vehicle.yaw : p.yaw;
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  const ax = fx * cos - fz * sin;
+  const ay = fx * sin + fz * cos;
+  g.save();
+  g.translate(R, R);
+  g.rotate(Math.atan2(ay, ax) + Math.PI / 2);
+  g.beginPath();
+  g.moveTo(0, -9);
+  g.lineTo(7, 7);
+  g.lineTo(0, 3);
+  g.lineTo(-7, 7);
+  g.closePath();
+  g.fillStyle = '#ffffff';
+  g.strokeStyle = '#111';
+  g.lineWidth = 2;
+  g.fill();
+  g.stroke();
+  g.restore();
+  g.strokeStyle = 'rgba(255,255,255,0.9)';
+  g.lineWidth = 4;
+  g.beginPath();
+  g.arc(R, R, R - 3, 0, Math.PI * 2);
+  g.stroke();
+}
+
+/** The whole city with every blip, fitted into `canvas` (the pause menu's map). */
+export function drawFullMap(canvas, base, game) {
+  const g = canvas.getContext('2d');
+  const s = Math.min(canvas.width / MAP_W, canvas.height / MAP_H);
+  g.fillStyle = '#3c8fb5';
+  g.fillRect(0, 0, canvas.width, canvas.height);
+  const ox = (canvas.width - MAP_W * s) / 2;
+  const oy = (canvas.height - MAP_H * s) / 2;
+  g.drawImage(base, ox, oy, MAP_W * s, MAP_H * s);
+  const toMap = (x, z) => ({ x: ox + (x - MAP_X0) * s, y: oy + (z - MAP_Z0) * s });
+  g.font = 'bold 15px "Trebuchet MS", sans-serif';
+  g.textAlign = 'center';
+  const labels = [['SUNSET BEACH', -38, 120], ['NEON STRIP', 120, 150], ['DOWNTOWN', 296, 260], ['CORAL HEIGHTS', 480, 70], ['SALTMARSH DOCKS', 300, 560], ['LUCKY SEVEN PIER', -96, 322], ['NEON STRIP', 470, 420]];
+  for (const [text, x, z] of labels) {
+    const q = toMap(x, z);
+    g.lineWidth = 4;
+    g.strokeStyle = 'rgba(0,0,0,0.6)';
+    g.strokeText(text, q.x, q.y);
+    g.fillStyle = '#fff';
+    g.fillText(text, q.x, q.y);
+  }
+  for (const b of mapBlips(game)) {
+    const q = toMap(b.x, b.z);
+    blipShape(g, q.x, q.y, b.color, b.shape, (b.size ?? 6) * 1.2);
+    if (b.label) {
+      g.fillStyle = '#111';
+      g.font = 'bold 10px sans-serif';
+      g.textBaseline = 'middle';
+      g.fillText(b.label, q.x, q.y + 0.5);
+    }
+  }
+  const p = game.player;
+  const q = toMap(p.vehicle ? p.vehicle.x : p.x, p.vehicle ? p.vehicle.z : p.z);
+  g.save();
+  g.translate(q.x, q.y);
+  const yaw = p.vehicle ? p.vehicle.yaw : p.yaw;
+  g.rotate(Math.atan2(Math.cos(yaw), Math.sin(yaw)) + Math.PI / 2);
+  g.beginPath();
+  g.moveTo(0, -11);
+  g.lineTo(8, 8);
+  g.lineTo(0, 4);
+  g.lineTo(-8, 8);
+  g.closePath();
+  g.fillStyle = '#fff';
+  g.strokeStyle = '#000';
+  g.lineWidth = 2;
+  g.fill();
+  g.stroke();
+  g.restore();
 }

@@ -289,12 +289,12 @@ function copOnFoot(game, c, dt) {
   }
 }
 
-/** Seconds out of every cop's sight that lose the police at `level` stars. */
+/** Seconds unseen that lose the police at `level` stars. */
 function escapeAfter(level) {
   return 9 + level * 3.5;
 }
 
-/** Seconds left until the police give up on a hidden player; null while seen or a mission holds the heat. */
+/** Seconds until the police give up on a hidden player; null while seen or held by a mission. */
 export function escapeTime(game) {
   const w = game.wanted;
   if (w.level === 0 || w.seen || w.level <= w.floor) return null;
@@ -306,17 +306,13 @@ const dispatch = { units: 0, roadblocks: 0, rows: [] };
 const rowPool = [];
 const nearestFirst = (a, b) => a.dist - b.dist;
 
-/** A unit's call sign on the radio: its model and a number fixed by the vehicle's id. */
+/** A unit's call sign: its model and a number fixed by its id. */
 function callSign(v) {
   if (!v.callSign) v.callSign = `${UNIT_NAMES[v.model] ?? 'UNIT'} ${10 + ((v.id * 37) % 90)}`;
   return v.callSign;
 }
 
-/**
- * The police dispatch board: every unit on the call (Air 1, cruisers chasing, crews out on foot,
- * roadblocks), nearest first, each with its distance from the player and what it is doing right
- * now. The object and its rows are reused from call to call: read them, do not keep them.
- */
+/** The dispatch board: every unit on the call, nearest first, its distance and what it is doing (rows reused per call). */
 export function dispatchRows(game) {
   const p = game.player;
   const px = p.vehicle ? p.vehicle.x : p.x;

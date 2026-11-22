@@ -276,10 +276,11 @@ export function updateRaces(game, dt) {
   else race.beacon = addBeacon(game.fx, nx, nz, 0xff8c1a, 5);
   const ranks = standings(race);
   race.position = ranks.indexOf(me) + 1;
+  race.order = ranks;
   game.hud.objective(race.countdown > 0 ? `${race.def.name}: wait for the green light` : p.vehicle === me.car ? `${race.def.name}: drive through the orange checkpoints` : 'Get back in your car!');
 }
 
-/** The race's line on the HUD: position, checkpoint and time. Null when no race runs. */
+/** The race on the HUD: position, checkpoint, time and the standings. Null when no race runs. */
 export function raceStatus(game) {
   const race = game.race;
   if (!race) return null;
@@ -292,5 +293,8 @@ export function raceStatus(game) {
     time: `${Math.floor(t / 60)}:${(t % 60).toFixed(1).padStart(4, '0')}`,
     next: race.def.checkpoints[race.racers[0].cp],
     after: race.def.checkpoints[race.racers[0].cp + 1] ?? null,
+    name: race.def.name,
+    prize: race.mission ? 0 : race.def.prize,
+    order: race.order ?? race.racers,
   };
 }

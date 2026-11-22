@@ -3,7 +3,7 @@
 // subtitles, banners (mission passed, busted), help toasts, district names and the car's name,
 // speed and radio station. Also draws the full city map for the pause menu.
 import { rankInfo } from './respect.js';
-import { nextMissionMarker } from './missions.js';
+import { nextMissionMarker, STORY } from './missions.js';
 import { dispatchRows, escapeTime } from './police.js';
 import { WEAPONS, WEAPON_ORDER, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
 import { raceMarkers, raceStatus } from './races.js';
@@ -26,6 +26,30 @@ const WEAPON_SLOT = {
   smg: { short: 'HORNET', icon: 'M2 6h34v5h-8l-1 3h-4l-1-3h-4l-2 8H9l2-8H2zM22 11h4v8h-4zM36 7h3v2h-3z' },
   shotgun: { short: 'BREAKER 12', icon: 'M1 7h38v3H17l-7 6H3l5-6H1zM20 10h12v2H20z' },
 };
+
+/** A mission's stages: the steps that show the player an objective, counted once per mission. */
+const stageCache = new Map();
+function stagesOf(def) {
+  let list = stageCache.get(def);
+  if (!list) {
+    list = [];
+    def.steps.forEach((step, n) => {
+      if (step.text) list.push(n);
+    });
+    stageCache.set(def, list);
+  }
+  return list;
+}
+
+function clockText(seconds) {
+  return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+}
+
+/** A segmented progress bar: `total` segments, the first `done` lit, the one after it current. */
+function setSegments(box, total, done) {
+  while (box.children.length < total) el('i', '', box);
+  for (let n = 0; n < box.children.length; n += 1) setClass(box.children[n], n >= total ? 'off' : n < done ? 'done' : n === done ? 'now' : '');
+}
 
 /** Sets an element's text only when it changed, so a steady HUD costs no layout work. */
 function setText(e, text) {
@@ -104,6 +128,38 @@ export function createHud(root, city) {
 
   // The left column: panels stack from the top and close up when one has nothing to say.
   const left = el('div', 'hud-left', hud);
+  // The mission card: which job of the story, whose, the objective, its stage and what comes next.
+  const mission = el('div', 'hud-panel hud-mission', left);
+  const missionHead = el('div', 'head', mission);
+  const missionNo = el('span', 'badge', missionHead);
+  const missionTitle = el('span', 'title', missionHead);
+  const missionGiver = el('span', 'giver', missionHead);
+  const missionTimer = el('span', 'timer', missionHead);
+  const missionObjective = el('div', 'objective', mission);
+  const missionStage = el('div', 'stage', mission);
+  const missionStageNo = el('span', 'label', missionStage);
+  const missionSegs = el('span', 'segs', missionStage);
+  const missionPay = el('span', 'pay', missionStage);
+  const missionNext = el('div', 'next', mission);
+  el('span', 'k', missionNext, 'NEXT');
+  const missionNextText = el('span', 'v', missionNext);
+  // The race card: the street race's name, position, checkpoints, prize and every racer's place.
+  const raceCard = el('div', 'hud-panel hud-racecard', left);
+  const raceHead = el('div', 'head', raceCard);
+  el('span', 'badge', raceHead, 'RACE');
+  const raceTitle = el('span', 'title', raceHead);
+  const raceTime = el('span', 'timer', raceHead);
+  const raceObjective = el('div', 'objective', raceCard);
+  const raceStage = el('div', 'stage', raceCard);
+  const racePos = el('span', 'pos', raceStage);
+  const raceCp = el('span', 'label', raceStage);
+  const raceSegs = el('span', 'segs', raceStage);
+  const racePrize = el('span', 'pay', raceStage);
+  const raceRows = [];
+  for (let n = 0; n < 4; n += 1) {
+    const row = el('div', 'row', raceCard);
+    raceRows.push({ row, place: el('span', 'place', row), name: el('span', 'name', row), car: el('span', 'car', row), gap: el('span', 'gap', row) });
+  }
   const dispatchBox = el('div', 'hud-panel hud-dispatch', left);
   const dispatchHead = el('div', 'head', dispatchBox);
   el('span', 'title', dispatchHead, 'PBPD DISPATCH');
@@ -125,11 +181,6 @@ export function createHud(root, city) {
   const armorBar = el('div', 'bar armor', bars);
   const armorFill = el('div', 'fill', armorBar);
 
-  const objective = el('div', 'hud-objective', hud);
-  const timer = el('div', 'hud-timer', hud);
-  const racePanel = el('div', 'hud-race', hud);
-  const racePos = el('div', 'pos', racePanel);
-  const raceInfo = el('div', 'info', racePanel);
   const subtitle = el('div', 'hud-subtitle', hud);
   const banner = el('div', 'hud-banner', hud);
   const bannerTitle = el('div', 'title', banner);
@@ -192,8 +243,6 @@ export function createHud(root, city) {
     },
     objective(text) {
       state.objectiveText = text;
-      objective.textContent = text;
-      objective.classList.toggle('show', Boolean(text));
     },
     banner(title, kind, sub = '') {
       bannerTitle.textContent = title;
@@ -247,18 +296,7 @@ export function createHud(root, city) {
       armorFill.style.width = `${Math.max(0, p.armor)}%`;
       armorBar.style.visibility = p.armor > 0 ? 'visible' : 'hidden';
 
-      const m = game.story.active;
-      if (m && m.timer > 0) {
-        timer.textContent = `${Math.floor(m.timer / 60)}:${String(Math.floor(m.timer % 60)).padStart(2, '0')}`;
-        timer.classList.add('show');
-      } else timer.classList.remove('show');
-
-      const rs = raceStatus(game);
-      racePanel.classList.toggle('show', Boolean(rs));
-      if (rs) {
-        racePos.innerHTML = `${rs.position}<small>/${rs.of}</small>`;
-        raceInfo.innerHTML = `POSITION<br>CHECKPOINT ${rs.cp}/${rs.cps}<br>${rs.time}`;
-      }
+      updateJobCards(game);
 
       if (state.lines.length) {
         state.lineTime -= dt;
@@ -311,6 +349,54 @@ export function createHud(root, city) {
       drawMinimap(mapCanvas, base, game);
     },
   };
+
+  /** The mission card, and the race card while a street race runs. */
+  function updateJobCards(game) {
+    const m = game.story.active;
+    mission.classList.toggle('show', Boolean(m));
+    if (m) {
+      const def = m.def;
+      const stages = stagesOf(def);
+      let stage = 0;
+      while (stage < stages.length && stages[stage] <= m.step) stage += 1;
+      const next = stages.find((n) => n > m.step);
+      setText(missionNo, `MISSION ${m.index + 1}/${STORY.length}`);
+      setText(missionTitle, def.title.toUpperCase());
+      setText(missionGiver, def.intro ? `· ${def.intro[0][0]}` : '');
+      setText(missionTimer, m.timer > 0 ? `⏱ ${clockText(m.timer)}` : '');
+      setText(missionObjective, state.objectiveText || def.steps[stages[Math.max(0, stage - 1)]]?.text || '');
+      setText(missionStageNo, `STAGE ${Math.max(1, stage)}/${stages.length}`);
+      setSegments(missionSegs, stages.length, Math.max(1, stage) - 1);
+      setText(missionPay, `PAYS $${def.reward.toLocaleString('en-US')}`);
+      missionNext.classList.toggle('off', next === undefined);
+      setText(missionNextText, next === undefined ? '' : def.steps[next].text);
+    }
+    const rs = raceStatus(game);
+    raceCard.classList.toggle('show', Boolean(rs));
+    if (!rs) return;
+    setText(raceTitle, rs.name.toUpperCase());
+    setText(raceTime, `⏱ ${rs.time}`);
+    raceObjective.classList.toggle('off', Boolean(m));
+    const goal = state.objectiveText.replace(`${rs.name}: `, '');
+    setText(raceObjective, m ? '' : goal.charAt(0).toUpperCase() + goal.slice(1));
+    setText(racePos, `${rs.position}/${rs.of}`);
+    setText(raceCp, `CHECKPOINT ${rs.cp}/${rs.cps}`);
+    setSegments(raceSegs, rs.cps, rs.cp - 1);
+    setText(racePrize, rs.prize ? `PRIZE $${rs.prize.toLocaleString('en-US')}` : 'FOR THE JOB');
+    const me = rs.order.findIndex((r) => r.player);
+    const mine = rs.order[me].car;
+    for (let n = 0; n < raceRows.length; n += 1) {
+      const r = rs.order[n];
+      const e = raceRows[n];
+      setClass(e.row, !r ? 'row off' : r.player ? 'row me' : 'row');
+      if (!r) continue;
+      setText(e.place, String(n + 1));
+      setText(e.name, r.player ? 'YOU' : r.name.toUpperCase());
+      setText(e.car, r.car.spec.name);
+      const gap = Math.round(Math.hypot(r.car.x - mine.x, r.car.z - mine.z));
+      setText(e.gap, r.player ? '' : r.out ? 'OUT' : r.done ? 'FINISHED' : `${gap} m ${n < me ? 'AHEAD' : 'BEHIND'}`);
+    }
+  }
 
   /** IN SIGHT / HIDDEN by the stars, and the dispatch board of every unit on the call. */
   function updateWantedPanels(game) {

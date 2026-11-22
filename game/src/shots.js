@@ -5,7 +5,7 @@
 // hand on the controls, so every frame is the game's own code rendering its own state.
 import { STEP } from './config.js';
 import { startGame, startTitle, stepGame, frameGame } from './world.js';
-import { createVehicle, syncVehicle } from './vehicles.js';
+import { createVehicle, syncVehicle, damageVehicle } from './vehicles.js';
 import { enterVehicle } from './player.js';
 import { giveWeapon, selectWeapon } from './player.js';
 import { spawnPoliceUnit, setWanted } from './police.js';
@@ -364,12 +364,15 @@ function roadblock(game) {
   enterVehicle(game, game.player, truck);
   run(game, 0.2, scriptedInput(['KeyW']));
   game.roadblockTimer = 99;
+  const rb = placeRoadblock(game, { x: 0, z: truck.z - 37, alongX: false, dir: -1 });
+  // Nico's SMG set the roadblock's cruiser alight as he came round the bend: it burns as the truck closes in.
+  const cruiser = rb.cars.find((v) => v.model === 'cruiser');
+  damageVehicle(game, cruiser, 9999, game.player);
   run(game, 1.0, scriptedInput(['KeyW']));
   game.player.armor = 72;
   game.player.health = 81;
   // The truck has been through the chase from Coral Heights: dented, not yet smoking.
   truck.health = 610;
-  placeRoadblock(game, { x: 0, z: truck.z - 17, alongX: false, dir: -1 });
   const flank = [policeUnit(game, 'psuv', truck.x + 4.4, truck.z + 2, Math.PI, 20), policeUnit(game, 'psuv', truck.x - 4.4, truck.z - 2, Math.PI, 20)];
   run(game, 0.3, scriptedInput(['KeyW']));
   // The Interceptors boxing the truck in, one on each side.
@@ -393,11 +396,15 @@ function roadblock(game) {
   addRespect(game, 12, '4-star heat');
   game.hud.say('Val', 'Air 1 has you in the light. Smash through that roadblock!');
   settleCamera(game, truck.yaw + 0.3, 0.14);
+  // Air 1's beam on the truck itself.
   heliAt(game, truck.x + 13, 17.5, truck.z - 42);
-  game.heli.spot.x = truck.x + 0.5;
-  game.heli.spot.z = truck.z - 8;
+  game.heli.spot.z = truck.z - 1.5;
+  // The roadblock's crew still standing opens up on the truck.
+  for (const c of rb.cops) if (c.alive) for (let n = 0; n < 2; n += 1) fireWeapon(game, c, { x: truck.x, y: 1.4, z: truck.z }, 1.5);
   frameGame(game, 1 / 60, { dx: 0, dy: 0 });
-  aimCamera(game, truck.x - 2, 2.4, truck.z - 16);
+  // A little higher than the chase camera, to see the roadblock over the truck's cab.
+  game.three.camera.position.y += 1.3;
+  aimCamera(game, truck.x - 2, 2.2, truck.z - 16);
 }
 
 /**

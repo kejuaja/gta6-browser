@@ -289,7 +289,9 @@ export function syncHelicopter(game, dt) {
   heli.cone.position.copy(o);
   heli.cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
   heli.cone.scale.set(SPOT_RADIUS * 0.85, len, SPOT_RADIUS * 0.85);
-  heli.cone.material.opacity = heli.spotting ? 0.07 : 0.05;
+  // Locked on, the beam burns bright enough to read against the sunset; sweeping, it stays faint.
+  heli.cone.material.opacity = heli.spotting ? 0.16 : 0.05;
+  heli.pool.material.opacity = heli.spotting ? 0.34 : 0.18;
   heli.pool.position.set(heli.spot.x, 0.08, heli.spot.z);
   heli.pool.scale.setScalar(SPOT_RADIUS * 1.1);
   heli.light.position.copy(o);

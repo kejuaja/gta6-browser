@@ -30,14 +30,13 @@ export function createEffects(scene) {
   const particles = [];
   for (let n = 0; n < MAX_PARTICLES; n += 1) particles.push({ alive: false, x: 0, y: 0, z: 0, vx: 0, vy: 0, vz: 0, life: 0, max: 1, kind: FX.spark, size: 1, spin: 0 });
 
-  const tracerMat = new THREE.LineBasicMaterial({ color: 0xfff3b0, transparent: true, opacity: 0.85 });
+  // Tracers: one thin glowing box each, stretched from muzzle to hit, thick enough to see in a still.
+  const tracerGeo = new THREE.BoxGeometry(1, 1, 1).translate(0, 0, 0.5);
+  const tracerMat = new THREE.MeshBasicMaterial({ color: 0xfff3b0, transparent: true, opacity: 0.9, blending: THREE.AdditiveBlending, depthWrite: false });
   const tracers = [];
   for (let n = 0; n < MAX_TRACERS; n += 1) {
-    const g = new THREE.BufferGeometry();
-    g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0, 0, 0, 0], 3));
-    const line = new THREE.Line(g, tracerMat);
+    const line = new THREE.Mesh(tracerGeo, tracerMat);
     line.visible = false;
-    line.frustumCulled = false;
     scene.add(line);
     tracers.push({ line, life: 0 });
   }
@@ -75,14 +74,9 @@ export function burst(fx, kind, x, y, z, count, speed = 3, up = 0) {
 export function tracer(fx, a, b) {
   const t = fx.tracers[fx.nextTracer];
   fx.nextTracer = (fx.nextTracer + 1) % fx.tracers.length;
-  const arr = t.line.geometry.attributes.position.array;
-  arr[0] = a.x;
-  arr[1] = a.y;
-  arr[2] = a.z;
-  arr[3] = b.x;
-  arr[4] = b.y;
-  arr[5] = b.z;
-  t.line.geometry.attributes.position.needsUpdate = true;
+  t.line.position.set(a.x, a.y, a.z);
+  t.line.lookAt(b.x, b.y, b.z);
+  t.line.scale.set(0.05, 0.05, Math.hypot(b.x - a.x, b.y - a.y, b.z - a.z));
   t.line.visible = true;
   t.life = 0.05;
 }

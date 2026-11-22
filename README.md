@@ -6,7 +6,7 @@
 
 **Palmera Bay: Sunset Heat** is an original open-world crime game that runs in a desktop browser from static files: no build step, no network, three.js vendored as one minified file.
 
-![Four stars on the Neon Strip: a police roadblock ahead and the Air 1 helicopter's searchlight on Voss's cash truck](screenshots/1-heat.jpg)
+![Four stars on the beach road: Voss's gold cash truck boxed in by Interceptor SUVs and heading into a roadblock (cruiser and Riot Truck), Air 1's searchlight overhead, the pier wheel behind](screenshots/1-roadblock.jpg)
 
 Nico Reyes wakes up from a coma in St. Marguerite Medical and comes home to Palmera Bay, a sun-soaked coastal city that developer Harlan Voss is buying up block by block, with a crooked police sergeant on his payroll. Eight story missions take him from his aunt's diner on the beach to the docks where he was shot, and then after Voss's money.
 
@@ -21,11 +21,17 @@ Nico Reyes wakes up from a coma in St. Marguerite Medical and comes home to Palm
 - **Street races**: two routes with start markers on the map, checkpoints, three AI rivals who brake for corners, a countdown, position and time on the HUD, and a cash prize.
 - **Dex's Garage**: engine, armour and tyre upgrades in levels, plus body kits for the SUV (roof rack, light bar, snorkel, spare wheel) and the van (ladder, racing stripes, neon underglow), paid in cash and visible on the car (bonnet scoop, twin exhausts, wing, bull bar, side plates, roof cage, gold rims, slick tyres). Dex keeps your tuned car in the save.
 - **Respect and rank**, from Nobody to King of Palmera: earned from missions, races, upgrades and crimes (cars stolen, chases escaped, Air 1 downed), shown in the HUD and the stats page; each rank pays a bonus and the Sunset Boulevard Run needs Hustler.
-- **Missions and a story**: delivery, timed collection, shootouts, a car chase, a tuned race against Voss's nephew and a four-star getaway with his cash.
+- **Missions and a story**: eight of them: delivery, timed collection, shootouts, a car chase, a tuned race against Voss's nephew and a four-star getaway in his gold cash truck.
 - **Combat**: fists, a pistol, an SMG and a shotgun, over-the-shoulder aiming, headshots.
 - **Bay Arms**, a shop for weapons, ammunition, armour and first aid; sun tokens to find; a safehouse that saves.
 - **HUD and menus**: rotating minimap with blips (police, Air 1 and its beam, roadblocks, races, the garage), health and armour, money, wanted stars, objectives, subtitles, title screen, pause menu with city map, stats, controls and settings.
 - **Synthesised sound** (gunshots, engines, sirens, the waves) and Palm FM, a synthwave radio station in every car.
+
+| On foot | Street race | Dex's Garage |
+|---|---|---|
+| ![Nico on foot firing an SMG at a police roadblock, one cop down, bystanders running, Air 1 overhead](screenshots/2-gunfight.jpg) | ![The Neon Strip Sprint: Nico's tuned Kestrel behind three rivals, a Palm Transit bus at the checkpoint junction](screenshots/3-streetrace.jpg) | ![A Marlin SUV with light bar, roof rack, bull bar and gold rims beside a tuned Kestrel, RANK UP to Bay Legend](screenshots/4-garage.jpg) |
+
+The four screenshots are the game's own renders, staged with its own systems (`?shot=roadblock|gunfight|streetrace|tuned`, see `shots.json`): the "Sunset Heat" mission at four stars with its survival timer, a roadblock with a Riot Truck, Interceptor SUVs and Air 1; an on-foot gunfight with the police on the Neon Strip; a street race with its rivals, checkpoint and race panel among traffic and pedestrians; and Dex's body kits with a rank up. Every one shows the HUD: minimap, money, rank and respect, health and armour, wanted stars, the objective.
 
 Controls: WASD to move, hold the right mouse button to look and aim (C switches to full mouse look), left mouse to shoot, F to get in or out of a car, Space for the handbrake, 1-4 or the wheel to switch weapons, Esc to pause.
 

@@ -70,13 +70,13 @@ export function createPostFx(renderer) {
   const halfB = new THREE.WebGLRenderTarget(1, 1, hdr);
   const quarterA = new THREE.WebGLRenderTarget(1, 1, hdr);
   const quarterB = new THREE.WebGLRenderTarget(1, 1, hdr);
-  const bright = pass(BRIGHT_FS, { tex: { value: null }, threshold: { value: 0.95 }, knee: { value: 0.45 } });
+  const bright = pass(BRIGHT_FS, { tex: { value: null }, threshold: { value: 1.0 }, knee: { value: 0.45 } });
   const blur = pass(BLUR_FS, { tex: { value: null }, step: { value: new THREE.Vector2() } });
   const composite = pass(COMPOSITE_FS, {
     scene: { value: sceneRT.texture },
     bloomNear: { value: halfA.texture },
     bloomWide: { value: quarterB.texture },
-    strength: { value: 0.7 },
+    strength: { value: 0.52 },
     exposure: { value: 1.0 },
   });
   const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), composite);

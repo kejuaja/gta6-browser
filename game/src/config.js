@@ -44,7 +44,7 @@ export const PALETTE = {
   skyMid: 0xff7433,
   skyHorizon: 0xffc247,
   sun: 0xff9445,
-  fog: 0xf0965a,
+  fog: 0xf2b998,
   asphalt: '#3b3d44',
   asphaltLight: '#45474f',
   sidewalk: 0xd9cfc0,

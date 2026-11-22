@@ -55,15 +55,16 @@ function makeHeliMesh() {
   return { root, rotor, tail, lens, red, blue };
 }
 
-/** A soft round glow texture for the searchlight's pool of light on the ground. */
+/** A soft ring for the searchlight's spot on the ground: a bright edge round a clear middle, so whatever it lights stays readable. */
 function glowTexture() {
   const c = document.createElement('canvas');
   c.width = c.height = 64;
   const g = c.getContext('2d');
   const grad = g.createRadialGradient(32, 32, 2, 32, 32, 32);
-  grad.addColorStop(0, 'rgba(255,250,225,1)');
-  grad.addColorStop(0.6, 'rgba(255,240,190,0.7)');
-  grad.addColorStop(1, 'rgba(255,230,170,0)');
+  grad.addColorStop(0, 'rgba(255,236,190,0.12)');
+  grad.addColorStop(0.62, 'rgba(255,232,180,0.3)');
+  grad.addColorStop(0.84, 'rgba(255,226,170,1)');
+  grad.addColorStop(1, 'rgba(255,220,160,0)');
   g.fillStyle = grad;
   g.fillRect(0, 0, 64, 64);
   return new THREE.CanvasTexture(c);
@@ -76,8 +77,8 @@ export function createHelicopter(scene) {
   scene.add(mesh.root);
   const coneGeo = new THREE.ConeGeometry(1, 1, 28, 1, true);
   coneGeo.translate(0, -0.5, 0);
-  const cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({ color: 0xfff1c4, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
-  const pool = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ map: glowTexture(), transparent: true, opacity: 0.4, blending: THREE.AdditiveBlending, depthWrite: false }));
+  const cone = new THREE.Mesh(coneGeo, new THREE.MeshBasicMaterial({ color: 0xfff1c4, transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+  const pool = new THREE.Mesh(new THREE.CircleGeometry(1, 32), new THREE.MeshBasicMaterial({ map: glowTexture(), color: 0xffd9a8, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending, depthWrite: false }));
   pool.rotation.x = -Math.PI / 2;
   const light = new THREE.SpotLight(0xfff2d0, 0, 140, 0.2, 0.55, 1.1);
   light.castShadow = false;
@@ -276,7 +277,7 @@ export function syncHelicopter(game, dt) {
   m.blue.visible = !phase;
   const beam = !heli.down;
   heli.cone.visible = heli.pool.visible = beam;
-  heli.light.intensity = beam ? 140 : 0;
+  heli.light.intensity = beam ? 90 : 0;
   if (!beam) return;
   const fx = Math.sin(heli.yaw);
   const fz = Math.cos(heli.yaw);
@@ -288,7 +289,7 @@ export function syncHelicopter(game, dt) {
   heli.cone.position.copy(o);
   heli.cone.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), dir);
   heli.cone.scale.set(SPOT_RADIUS * 0.85, len, SPOT_RADIUS * 0.85);
-  heli.cone.material.opacity = heli.spotting ? 0.09 : 0.06;
+  heli.cone.material.opacity = heli.spotting ? 0.07 : 0.05;
   heli.pool.position.set(heli.spot.x, 0.08, heli.spot.z);
   heli.pool.scale.setScalar(SPOT_RADIUS * 1.1);
   heli.light.position.copy(o);

@@ -129,7 +129,8 @@ function makeEnvironment(scene, renderer) {
 }
 
 function makeLights(scene) {
-  const hemi = new THREE.HemisphereLight(0xffb98a, 0x5c3f63, 0.8);
+  // A generous fill, so cars and people facing away from the low sun keep their colours.
+  const hemi = new THREE.HemisphereLight(0xffc49a, 0x8a7088, 1.05);
   scene.add(hemi);
   const sun = new THREE.DirectionalLight(PALETTE.sun, 3.1);
   sun.castShadow = true;
@@ -440,7 +441,7 @@ function makeHills(scene, rng) {
 
 /** Builds every static mesh of the city into `scene`; returns the parts that move. */
 export function buildCityscape(scene, city, rng, renderer) {
-  scene.fog = new THREE.Fog(PALETTE.fog, 160, 720);
+  scene.fog = new THREE.Fog(PALETTE.fog, 260, 1100);
   const sky = makeSky(scene);
   makeEnvironment(scene, renderer);
   const lights = makeLights(scene);

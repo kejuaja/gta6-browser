@@ -4,6 +4,7 @@
 // speed and radio station. Also draws the full city map for the pause menu.
 import { rankInfo } from './respect.js';
 import { nextMissionMarker } from './missions.js';
+import { dispatchRows, escapeTime } from './police.js';
 import { WEAPONS, DISTRICTS, WORLD, PALETTE, GRID } from './config.js';
 import { raceMarkers, raceStatus } from './races.js';
 
@@ -12,6 +13,20 @@ const MAP_Z0 = -60;
 const MAP_W = 800;
 const MAP_H = 740;
 const DISTRICT_TINT = { beach: '#e9d7b4', downtown: '#9fb0c4', strip: '#d9a7c7', heights: '#a9d39a', docks: '#a8adb5' };
+
+/** The dispatch panel's tags: what each colour means is the same in every scene. */
+const TAG_CLASS = { RAMMING: 'red', FIRING: 'fire', SPOTLIGHT: 'blue', SEARCHING: 'slate', RETURNING: 'slate', 'CLOSING IN': 'teal', PURSUIT: 'indigo', ROADBLOCK: 'amber', 'ON FOOT': 'purple' };
+const UNIT_ICON = { air: '✚', car: '▰', foot: '●' };
+const DISPATCH_ROWS = 5;
+
+/** Sets an element's text only when it changed, so a steady HUD costs no layout work. */
+function setText(e, text) {
+  if (e.textContent !== text) e.textContent = text;
+}
+
+function setClass(e, cls) {
+  if (e.className !== cls) e.className = cls;
+}
 
 function el(tag, cls, parent, text = '') {
   const e = document.createElement(tag);
@@ -68,6 +83,22 @@ export function createHud(root, city) {
   const stars = el('div', 'hud-stars', top);
   const starEls = [];
   for (let n = 0; n < 5; n += 1) starEls.push(el('span', 'star', stars, '★'));
+  const seen = el('div', 'hud-seen', top);
+  const seenTag = el('span', 'tag', seen);
+  const seenWhy = el('span', 'why', seen);
+
+  // The left column: panels stack from the top and close up when one has nothing to say.
+  const left = el('div', 'hud-left', hud);
+  const dispatchBox = el('div', 'hud-panel hud-dispatch', left);
+  const dispatchHead = el('div', 'head', dispatchBox);
+  el('span', 'title', dispatchHead, 'PBPD DISPATCH');
+  const dispatchCount = el('span', 'count', dispatchHead);
+  const dispatchEls = [];
+  for (let n = 0; n < DISPATCH_ROWS; n += 1) {
+    const row = el('div', 'row', dispatchBox);
+    dispatchEls.push({ row, icon: el('span', 'icon', row), name: el('span', 'name', row), dist: el('span', 'dist', row), tag: el('span', 'tag', row) });
+  }
+  const dispatchFoot = el('div', 'foot', dispatchBox);
 
   const mapBox = el('div', 'hud-map', hud);
   const mapCanvas = el('canvas', 'hud-minimap', mapBox);
@@ -191,6 +222,7 @@ export function createHud(root, city) {
         s.classList.toggle('on', n < w.level);
         s.classList.toggle('dim', n < w.level && flash);
       });
+      updateWantedPanels(game);
       healthFill.style.width = `${Math.max(0, (p.health / p.maxHealth) * 100)}%`;
       healthBar.classList.toggle('low', p.health < 30);
       armorFill.style.width = `${Math.max(0, p.armor)}%`;
@@ -260,6 +292,36 @@ export function createHud(root, city) {
       drawMinimap(mapCanvas, base, game);
     },
   };
+
+  /** IN SIGHT / HIDDEN by the stars, and the dispatch board of every unit on the call. */
+  function updateWantedPanels(game) {
+    const w = game.wanted;
+    seen.classList.toggle('show', w.level > 0);
+    dispatchBox.classList.toggle('show', w.level > 0);
+    if (w.level === 0) return;
+    const heli = game.heli;
+    const escape = escapeTime(game);
+    setText(seenTag, w.seen ? 'IN SIGHT' : 'HIDDEN');
+    setClass(seenTag, w.seen ? 'tag red' : 'tag blue');
+    setText(seenWhy, heli && heli.spotting ? 'Air 1 has you in the light' : w.seen ? 'Cops have eyes on you' : escape !== null ? `Lost in ${Math.ceil(escape)}s if they stay blind` : 'The job keeps the heat on');
+    const d = dispatchRows(game);
+    setText(dispatchCount, `${d.units ? `${d.units} UNIT${d.units === 1 ? '' : 'S'}` : 'UNITS EN ROUTE'} · ${w.level}★`);
+    for (let n = 0; n < DISPATCH_ROWS; n += 1) {
+      const r = d.rows[n];
+      const e = dispatchEls[n];
+      setClass(e.row, r ? `row ${r.kind}` : 'row off');
+      if (!r) continue;
+      setText(e.icon, UNIT_ICON[r.kind]);
+      setText(e.name, r.name);
+      setText(e.dist, `${Math.round(r.dist)} m`);
+      setText(e.tag, r.tag);
+      setClass(e.tag, `tag ${TAG_CLASS[r.tag]}`);
+    }
+    const more = d.units - DISPATCH_ROWS;
+    const p = game.player;
+    const suspect = p.vehicle ? `suspect in a ${p.vehicle.spec.name}` : 'suspect on foot';
+    setText(dispatchFoot, `${more > 0 ? `+${more} more · ` : ''}${d.roadblocks ? 'roadblock set · ' : ''}${suspect}`);
+  }
   return api;
 }
 

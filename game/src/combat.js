@@ -60,6 +60,8 @@ export function fireWeapon(game, shooter, aim, accuracy = 1) {
   dx /= len;
   dy /= len;
   dz /= len;
+  // When it last fired: the police dispatch panel tags a unit FIRING from it.
+  shooter.firedAt = game.time;
   for (let n = 0; n < w.pellets; n += 1) {
     const s = w.spread * accuracy;
     const d = { x: dx + (Math.random() - 0.5) * 2 * s, y: dy + (Math.random() - 0.5) * 2 * s, z: dz + (Math.random() - 0.5) * 2 * s };

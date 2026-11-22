@@ -289,6 +289,73 @@ function copOnFoot(game, c, dt) {
   }
 }
 
+/** Seconds out of every cop's sight that lose the police at `level` stars. */
+function escapeAfter(level) {
+  return 9 + level * 3.5;
+}
+
+/** Seconds left until the police give up on a hidden player; null while seen or a mission holds the heat. */
+export function escapeTime(game) {
+  const w = game.wanted;
+  if (w.level === 0 || w.seen || w.level <= w.floor) return null;
+  return Math.max(0, escapeAfter(w.level) - w.unseen);
+}
+
+const UNIT_NAMES = { cruiser: 'CRUISER', psuv: 'INTERCEPTOR', ptruck: 'RIOT TRUCK' };
+const dispatch = { units: 0, roadblocks: 0, rows: [] };
+const rowPool = [];
+const nearestFirst = (a, b) => a.dist - b.dist;
+
+/** A unit's call sign on the radio: its model and a number fixed by the vehicle's id. */
+function callSign(v) {
+  if (!v.callSign) v.callSign = `${UNIT_NAMES[v.model] ?? 'UNIT'} ${10 + ((v.id * 37) % 90)}`;
+  return v.callSign;
+}
+
+/**
+ * The police dispatch board: every unit on the call (Air 1, cruisers chasing, crews out on foot,
+ * roadblocks), nearest first, each with its distance from the player and what it is doing right
+ * now. The object and its rows are reused from call to call: read them, do not keep them.
+ */
+export function dispatchRows(game) {
+  const p = game.player;
+  const px = p.vehicle ? p.vehicle.x : p.x;
+  const pz = p.vehicle ? p.vehicle.z : p.z;
+  let n = 0;
+  const add = (kind, name, dist, tag) => {
+    const r = rowPool[n] ?? (rowPool[n] = { kind: '', name: '', dist: 0, tag: '' });
+    r.kind = kind;
+    r.name = name;
+    r.dist = dist;
+    r.tag = tag;
+    n += 1;
+  };
+  const heli = game.heli;
+  if (heli && heli.active && !heli.down) add('air', 'AIR 1', Math.hypot(heli.x - px, heli.z - pz), heli.spotting ? 'SPOTLIGHT' : heli.leaving ? 'RETURNING' : 'SEARCHING');
+  for (const v of game.vehicles) {
+    if (!v.spec.police || !v.crew || v.ai === 'traffic') continue;
+    let alive = 0;
+    let fired = false;
+    let near = Infinity;
+    for (const c of v.crew) {
+      if (!c.alive) continue;
+      alive += 1;
+      if (game.time - (c.firedAt ?? -9) < 1) fired = true;
+      near = Math.min(near, c.vehicle ? Math.hypot(v.x - px, v.z - pz) : Math.hypot(c.x - px, c.z - pz));
+    }
+    if (!alive) continue;
+    if (v.roadblock) add('car', callSign(v), near, fired ? 'FIRING' : 'ROADBLOCK');
+    else if (v.deployed) add('foot', callSign(v), near, fired ? 'FIRING' : 'ON FOOT');
+    else if (v.ai === 'police') add('car', callSign(v), near, near < 12 ? 'RAMMING' : near < 45 ? 'CLOSING IN' : 'PURSUIT');
+  }
+  dispatch.rows.length = 0;
+  for (let k = 0; k < n; k += 1) dispatch.rows.push(rowPool[k]);
+  dispatch.rows.sort(nearestFirst);
+  dispatch.units = n;
+  dispatch.roadblocks = (game.roadblocks ?? []).length;
+  return dispatch;
+}
+
 /** One step of the whole police force and the wanted level's upkeep. */
 export function updatePolice(game, dt) {
   const w = game.wanted;
@@ -371,7 +438,7 @@ export function updatePolice(game, dt) {
       w.lastZ = p.z;
     } else {
       w.unseen += dt;
-      if (w.unseen > 9 + w.level * 3.5 && w.level > w.floor) {
+      if (w.unseen > escapeAfter(w.level) && w.level > w.floor) {
         clearWanted(game);
         if (game.onWantedLost) game.onWantedLost();
       }

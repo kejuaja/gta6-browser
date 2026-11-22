@@ -1,11 +1,11 @@
-// The screenshot scenes behind ?shot=heat|race|garage|citychase (and the older chase, shootout,
-// pursuit, beach and title). Each one starts a real game,
+// The screenshot scenes behind ?shot=roadblock|gunfight|streetrace|tuned (and the older heat, race,
+// garage, citychase, chase, shootout, pursuit, beach and title). Each one starts a real game,
 // sets up a moment of it with the game's own systems (a mission step, a stolen car, the wanted
 // level, police units) and plays the real simulation forward for a few seconds with a scripted
 // hand on the controls, so every frame is the game's own code rendering its own state.
 import { STEP } from './config.js';
 import { startGame, startTitle, stepGame, frameGame } from './world.js';
-import { createVehicle } from './vehicles.js';
+import { createVehicle, syncVehicle } from './vehicles.js';
 import { enterVehicle } from './player.js';
 import { giveWeapon, selectWeapon } from './player.js';
 import { spawnPoliceUnit, setWanted } from './police.js';
@@ -18,6 +18,7 @@ import { placeRoadblock } from './roadblocks.js';
 import { RACES, startRace } from './races.js';
 import { applyUpgrades, garageBay } from './garage.js';
 import { addRespect } from './respect.js';
+import { spawnPed, panic } from './crowd.js';
 
 /** A stand-in for the keyboard and mouse: which keys are held, and mouse buttons. */
 function scriptedInput(keys = [], mouse = {}) {
@@ -314,7 +315,216 @@ function citychase(game) {
   frameGame(game, 1 / 60, { dx: 0, dy: 0 });
 }
 
-const SCENES = { heat, race, garage, citychase, chase, shootout, beach, pursuit, title };
+/** A police unit of a set model (cruiser, psuv or ptruck), picked the way the wanted level picks it. */
+function policeUnit(game, model, x, z, yaw, speed) {
+  const roll = { ptruck: 0.1, psuv: 0.5, cruiser: 0.95 }[model];
+  const next = game.rng.next;
+  game.rng.next = () => roll;
+  try {
+    return policeBehind(game, x, z, yaw, speed);
+  } finally {
+    game.rng.next = next;
+  }
+}
+
+/** Turns the settled camera to look at (x, y, z): the same viewpoint, framed lower or wider. */
+function aimCamera(game, x, y, z) {
+  game.three.camera.lookAt(x, y, z);
+}
+
+/** Puts the camera at `from` looking at `to` (each [x, y, z]) at field of view `fov`, after the last frame. */
+function placeCamera(game, from, to, fov = 62) {
+  const cam = game.three.camera;
+  cam.position.set(...from);
+  cam.fov = fov;
+  cam.updateProjectionMatrix();
+  cam.lookAt(...to);
+}
+
+/**
+ * Cover: "Sunset Heat" at four stars on the beach road. Voss's cash truck runs south at a
+ * roadblock (a cruiser and a Riot Truck, cones, barriers, cops with guns out), Interceptor SUVs
+ * alongside, Air 1 overhead with its beam on the road; the pier and its wheel off to the left.
+ */
+function roadblock(game) {
+  startGame(game);
+  game.player.money = 24850;
+  game.respect = 1310;
+  giveWeapon(game.player, 'smg', 150);
+  selectWeapon(game.player, 'smg');
+  game.story.index = 7;
+  startMission(game, 7);
+  game.hud.clearLines();
+  const truck = game.story.active.cars.truck;
+  truck.x = -1.8;
+  truck.z = 396;
+  truck.yaw = Math.PI;
+  truck.vx = 0;
+  truck.vz = -20;
+  enterVehicle(game, game.player, truck);
+  run(game, 0.2, scriptedInput(['KeyW']));
+  game.roadblockTimer = 99;
+  run(game, 1.0, scriptedInput(['KeyW']));
+  game.player.armor = 72;
+  game.player.health = 81;
+  placeRoadblock(game, { x: 0, z: truck.z - 17, alongX: false, dir: -1 });
+  const flank = [policeUnit(game, 'psuv', truck.x + 4.4, truck.z + 2, Math.PI, 20), policeUnit(game, 'psuv', truck.x - 4.4, truck.z - 2, Math.PI, 20)];
+  run(game, 0.3, scriptedInput(['KeyW']));
+  // The Interceptors boxing the truck in, one on each side.
+  const offsets = [[4.7, 0], [-4.5, -1.5]];
+  flank.forEach((v, n) => {
+    if (!v) return;
+    v.x = truck.x + offsets[n][0];
+    v.z = truck.z + offsets[n][1];
+    v.yaw = Math.PI + (n ? 0.06 : -0.05);
+    v.vx = truck.vx;
+    v.vz = truck.vz;
+    syncVehicle(v, 0, game.time);
+  });
+  game.story.active.timer = 41;
+  heliAt(game, truck.x + 13, 17.5, truck.z - 42);
+  game.heli.spot.x = truck.x + 0.5;
+  game.heli.spot.z = truck.z - 15;
+  game.wanted.seen = true;
+  game.hud.clearMessages();
+  game.hud.notify('ROADBLOCK AHEAD! Ram the gap between the cruisers or take another street.');
+  addRespect(game, 12, '4-star heat');
+  game.hud.say('Val', 'Air 1 has you in the light. Smash through that roadblock!');
+  settleCamera(game, truck.yaw + 0.3, 0.14);
+  heliAt(game, truck.x + 13, 17.5, truck.z - 42);
+  game.heli.spot.x = truck.x + 0.5;
+  game.heli.spot.z = truck.z - 8;
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+  aimCamera(game, truck.x - 2, 2.4, truck.z - 16);
+}
+
+/**
+ * On foot at four stars: Nico, SMG up, trading fire with a roadblock's crew on a city street,
+ * one cop down, bystanders running, Air 1 hanging over the cruisers.
+ */
+function gunfight(game) {
+  startGame(game);
+  const p = game.player;
+  game.player.money = 21300;
+  game.respect = 1180;
+  giveWeapon(p, 'pistol', 60);
+  giveWeapon(p, 'smg', 180);
+  selectWeapon(p, 'smg');
+  game.story.index = 3;
+  startMission(game, 3);
+  jumpToStep(game, 4);
+  game.hud.clearLines();
+  p.x = 242;
+  p.z = 445.5;
+  p.yaw = Math.PI / 2;
+  setWanted(game, 4);
+  game.roadblockTimer = 99;
+  game.heli.cooldown = 0;
+  const rb = placeRoadblock(game, { x: 266, z: 444, alongX: true, dir: 1 });
+  for (const [dx, dz] of [[7, -9.5], [11, 9.8], [16, -10.2], [4, 10.4], [20, 9.6]]) spawnPed(game, p.x + dx, p.z + dz);
+  panic(game, p.x + 12, p.z, 40);
+  game.rig.yaw = Math.PI / 2;
+  game.rig.pitch = 0.05;
+  run(game, 1.4, scriptedInput([], { right: true }));
+  damageCharacter(game, rb.cops[0], 999, p, { x: rb.cops[0].x, y: 1.4, z: rb.cops[0].z });
+  run(game, 0.3, scriptedInput([], { right: true }));
+  p.armor = 58;
+  p.health = 71;
+  setWanted(game, 4);
+  game.wanted.seen = true;
+  const aimAt = rb.cops.find((c) => c.alive) ?? rb.cops[1];
+  const yaw = Math.atan2(aimAt.x - p.x, aimAt.z - p.z);
+  game.rig.yaw = yaw + 0.06;
+  run(game, 0.2, scriptedInput([], { right: true }));
+  heliAt(game, p.x + 62, 15, p.z + 5);
+  game.hud.clearMessages();
+  game.hud.clearLines();
+  addRespect(game, 10, 'Cop down');
+  game.hud.say('Nico', 'Tell Brannigan he can come get his money himself.');
+  settleCamera(game, yaw + 0.06, 0.07, 40);
+  heliAt(game, p.x + 62, 15, p.z + 5);
+  for (let n = 0; n < 3; n += 1) fireWeapon(game, p, { x: aimAt.x, y: 1.3, z: aimAt.z }, 0.5);
+  for (const c of rb.cops) if (c.alive && c !== aimAt) fireWeapon(game, c, { x: p.x, y: 1.3, z: p.z }, 6);
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+  game.hud.update(game, 0);
+  // Pulled back over Nico's right shoulder: all of him, SMG up, and the roadblock he is firing at.
+  const fx = Math.sin(yaw);
+  const fz = Math.cos(yaw);
+  placeCamera(game, [p.x - fx * 3.9 - fz * 1.35, 2.15, p.z - fz * 3.9 + fx * 1.35], [aimAt.x, 2.0, aimAt.z], 58);
+}
+
+/**
+ * The Neon Strip Sprint, second leg: Nico's Kestrel chasing all three rivals east toward the
+ * orange checkpoint, a Palm Transit bus at the junction, the race panel up.
+ */
+function streetrace(game) {
+  startGame(game);
+  game.player.money = 9800;
+  game.respect = 470;
+  giveWeapon(game.player, 'pistol', 48);
+  selectWeapon(game.player, 'pistol');
+  game.story.index = 6;
+  const def = RACES.find((r) => r.id === 'strip');
+  const car = createVehicle(game, 'kestrel', def.start.x, def.start.z, 0, 0xff3b30);
+  applyUpgrades(car, { engine: 2, armour: 0, tyres: 2 });
+  enterVehicle(game, game.player, car);
+  const r = startRace(game, def);
+  r.countdown = 0;
+  r.time = 38.6;
+  const yaw = Math.PI / 2;
+  const grid = [[236, 371.6, 28], [243, 366.8, 28.5], [249, 373.2, 29], [256, 368.6, 29]];
+  r.racers.forEach((racer, n) => {
+    const [x, z, speed] = grid[n];
+    racer.cp = 1;
+    racer.car.x = x;
+    racer.car.z = z;
+    racer.car.yaw = yaw;
+    racer.car.vx = speed;
+    racer.car.vz = 0;
+  });
+  spawnTrafficCar(game, [4, 4, 4, 5], 0.8, 'bus');
+  spawnTrafficCar(game, [4, 6, 4, 5], 0.55, 'suv');
+  for (const [x, z] of [[256, 379.5], [266, 380.2], [270, 360.4], [261, 359.8], [281, 380]]) spawnPed(game, x, z);
+  run(game, 0.9, scriptedInput(['KeyW']));
+  game.hud.clearMessages();
+  game.hud.say('Rico', 'Eat my dust, Reyes! The Strip is mine!');
+  settleCamera(game, car.yaw - 0.12, 0.17);
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+  // Low behind the Kestrel's left shoulder, the pack and the checkpoint junction ahead.
+  placeCamera(game, [car.x - 6.5, 2.6, car.z - 1.8], [car.x + 26, 1.2, car.z - 0.5], 64);
+}
+
+/**
+ * Dex's Garage: a Marlin SUV with the full body kit (light bar, roof rack, snorkel, spare wheel,
+ * side steps), race engine and gold rims in the bay, a tuned Kestrel beside it, and the rank up
+ * the job paid for.
+ */
+function tuned(game) {
+  startGame(game);
+  game.player.money = 16400;
+  game.respect = 1385;
+  game.story.index = 7;
+  const bay = garageBay(game);
+  // Out of the menu: the car is in the bay and the work is done.
+  game.garageInside = true;
+  const suv = createVehicle(game, 'suv', bay.x, bay.z, -1.35, 0xf2f2f2);
+  applyUpgrades(suv, { engine: 3, armour: 1, tyres: 2, kit: 2 });
+  enterVehicle(game, game.player, suv);
+  const kestrel = createVehicle(game, 'kestrel', bay.x - 1.5, bay.z + 5.6, -1.75, 0xffcc00);
+  applyUpgrades(kestrel, { engine: 3, armour: 0, tyres: 2 });
+  kestrel.ai = 'parked';
+  run(game, 0.5, scriptedInput());
+  game.hud.clearMessages();
+  game.garageBeacon.mesh.visible = game.garageBeacon.arrow.visible = false;
+  addRespect(game, 25, 'Body kit upgrade');
+  game.hud.say('Dex', 'Light bar, snorkel, gold rims. Now that is a Bay Legend ride.');
+  settleCamera(game, 1.1, 0.2);
+  frameGame(game, 1 / 60, { dx: 0, dy: 0 });
+  // In front of the bay, low: the SUV's nose and kit, the Kestrel by the door, the garage behind.
+  placeCamera(game, [suv.x - 7.2, 3.2, suv.z - 2.9], [suv.x + 1, 2.6, suv.z + 1.9], 58);
+}
+
+const SCENES = { roadblock, gunfight, streetrace, tuned, heat, race, garage, citychase, chase, shootout, beach, pursuit, title };
 
 /** Stages the named scene (an unknown name is the title screen). Resolves once it is set. */
 export async function stageShot(game, name, menus) {

@@ -163,7 +163,7 @@ export const STORY = [
       { type: 'race', race: 'strip', text: 'Beat Rico Vance in the Neon Strip Sprint.' },
     ],
     outro: [
-      [RICO, 'Okay, okay! Uncle Harlan is leaving tonight. His cash goes out of Coral Heights in a black Duna, all of it.'],
+      [RICO, 'Okay, okay! Uncle Harlan is leaving tonight. His cash goes out of Coral Heights in a gold Duna, all of it.'],
       [NICO, 'Then tonight it gets a new driver.'],
     ],
     reward: 2500,
@@ -179,8 +179,8 @@ export const STORY = [
     ],
     weaponsAtStart: [['smg', 120]],
     steps: [
-      { type: 'spawnCar', id: 'truck', model: 'duna', color: 0x1c1c1e, x: 523, z: 175, yaw: Math.PI },
-      { type: 'enter', car: 'truck', text: "Steal Voss's black Duna in Coral Heights." },
+      { type: 'spawnCar', id: 'truck', model: 'duna', color: 0xe0a82e, x: 523, z: 175, yaw: Math.PI },
+      { type: 'enter', car: 'truck', text: "Steal Voss's gold Duna in Coral Heights." },
       { type: 'wanted', level: 4, say: [[NICO, 'Roadblocks and a helicopter. Voss is paying overtime tonight.']] },
       { type: 'survive', car: 'truck', seconds: 60, floor: 4, text: 'Survive the heat: keep the cash truck in one piece.' },
       { type: 'deliver', car: 'truck', carName: 'the Duna', poi: 'safehouse', radius: 10, text: 'Bring the truck to the safehouse in Coral Heights.', lose: 'Lose the cops before you go to the safehouse. Paint Shack in the Docks helps ($100).', say: [[VAL, 'Air 1 is low on fuel and pulling back. Now lose the rest of them!']] },
